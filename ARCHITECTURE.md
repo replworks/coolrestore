@@ -24,8 +24,8 @@ a target directory into either a plan (no change) or an applied restore
   produces both the plan report and the applied result;
 - the target directory can never be affected by anything in the archive
   that was not explicitly validated as safe;
-- a failed attempt never leaves the target directory worse off than
-  before the attempt.
+- failures before Change Application never affect the target, and
+  replace-mode application failures recover through atomic rename rollback.
 
 ---
 
@@ -212,8 +212,10 @@ boundaries.
 
 9. **Change Application** — Execute the plan it is given, exactly as
    given, without recomputing or second-guessing what should change.
-   Responsible for restoring the target directory's prior state if
-   execution fails partway through.
+   In replace mode it is responsible for atomic rename rollback if
+   execution fails partway through. In merge mode it is responsible for
+   cleaning temporary artifacts and reporting that applied changes may be
+   partial; complete merge rollback is not guaranteed.
 
 10. **Result Reporter** — Translate whatever the flow produced (a plan, an
     applied result, or a failure) into the reports and exit status defined
@@ -241,6 +243,8 @@ boundaries.
   the only component permitted to write to the target directory, and it
   may only do so when both a change plan and an authorization signal are
   present. It has no authority to deviate from the plan it was given.
+- Merge-mode failure recovery is limited to cleaning temporary artifacts;
+  the target may contain changes already applied before the failure.
 - In replace mode, Change Application must use an atomic rename sequence:
   move the existing target to a temporary backup name, move the staged
   result into the target name, and restore the backup name if the second
@@ -322,7 +326,9 @@ It does not consume raw archive or target directory data directly.
 - **Change Application failure (partway through mutation)**: in replace
   mode, the atomic rename rollback must restore the prior target directory
   entry before cleanup and lock release. Replace must be rejected before
-  mutation if the same-filesystem precondition is not met.
+  mutation if the same-filesystem precondition is not met. In merge mode,
+  temporary artifacts must be cleaned and the failure report must state
+  that the target may contain partial changes.
 
 ---
 

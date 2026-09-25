@@ -22,8 +22,9 @@ cannot be trusted to be well-formed.
   predictable, previewable outcome.
 - Guarantee that no restore attempt can modify anything without the
   operator's explicit, separate confirmation.
-- Guarantee that the target directory is never left worse off than before
-  a failed restore attempt.
+- Guarantee that the target directory is unchanged for every failure before
+  Change Application, and that replace-mode application failures are
+  recovered through atomic rename rollback.
 - Work the same way regardless of which service's storage is being
   restored.
 
@@ -61,7 +62,7 @@ cannot be trusted to be well-formed.
   restored.
 - A **failure report**, produced when a restore cannot proceed or does not
   complete, describing which step failed and confirming whether the target
-  directory was left unchanged.
+  directory was left unchanged or may contain merge-mode partial changes.
 - A **process exit status** indicating success or failure, suitable for
   use in automated scripts.
 
@@ -124,7 +125,8 @@ cannot be trusted to be well-formed.
     target directory, mode used, and the number of regular-file archive
     entries restored. Directories are not included in this count.
 14. On any failure, the product must report which step failed and whether
-    the target directory was left unchanged.
+    the target directory was left unchanged or may contain merge-mode
+    partial changes.
 15. The product must produce a non-zero process exit status on any
     failure, and a zero exit status only on success (including a
     successful plan-only run).
@@ -194,9 +196,12 @@ cannot be trusted to be well-formed.
 - A confirmed restore fails partway through applying changes to the
   target directory.
 
-In every error condition above, the product must make no partial or
-inconsistent change to the target directory beyond what is explicitly
-allowed by the corresponding functional requirement (11 and 12).
+For every error condition before Change Application, the product must make
+no change to the target directory. A merge-mode failure during Change
+Application may leave applied file changes; it must remove temporary
+artifacts and report that the target may be partially changed. A
+replace-mode failure during Change Application must use the atomic rename
+rollback defined in requirement 12.
 
 ## Non-Goals
 
@@ -229,8 +234,8 @@ allowed by the corresponding functional requirement (11 and 12).
   first.
 - Given an archive source that fails to download or read, the target
   directory is unchanged after the attempt.
-- Given a forced failure partway through a replace-mode restore, the
-  target directory afterward matches its pre-restore state.
+- Given a forced failure partway through a replace-mode restore, atomic
+  rename rollback restores the prior target directory entry.
 - Given a successful restore, the reported file count matches the number
   of files actually present in the target directory that originated from
   the archive.
@@ -241,7 +246,9 @@ allowed by the corresponding functional requirement (11 and 12).
   committing to it, every time.
 - No archive, regardless of its internal contents, can cause a change
   outside the specified target directory.
-- No failed restore attempt ever leaves the target directory in a state
-  worse than, or inconsistent with, its state before the attempt.
+- No failure before Change Application changes the target directory, and a
+  failed replace application restores the prior target directory entry
+  through atomic rename rollback. Merge-mode application failures are
+  reported as potentially partial and leave no temporary artifacts.
 - The product behaves identically regardless of which service's storage
   is being restored.
