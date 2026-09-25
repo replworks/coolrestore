@@ -22,8 +22,9 @@ cannot be trusted to be well-formed.
   predictable, previewable outcome.
 - Guarantee that no restore attempt can modify anything without the
   operator's explicit, separate confirmation.
-- Guarantee that the target directory is never left worse off than before
-  a failed restore attempt.
+- Guarantee that the target directory is unchanged for every failure before
+  Change Application, and that replace-mode application failures are
+  recovered through atomic rename rollback.
 - Work the same way regardless of which service's storage is being
   restored.
 
@@ -36,23 +37,21 @@ cannot be trusted to be well-formed.
 
 ## Inputs
 
-- **Archive source**: either
-  - a location in S3-compatible storage, or
-  - a path to a local archive file already present on disk.
+- **Archive source**: supplied once through `--source`, using either
+  - an S3 URI in the form `s3://bucket/object-key`, or
+  - an absolute path to a local archive file already present on disk.
 - **Archive format**: a gzip-compressed tar archive (`.tar.gz`).
 - **Target directory**: an absolute path on the local filesystem where the
   archive's contents should be restored.
 - **Restore mode**: `merge` (default) or `replace`.
-- **Confirmation flag**: an explicit signal that authorizes real changes;
-  its absence means no changes may be made.
-- **Optional staging location**: a directory to use for intermediate work
-  during the restore.
-- **Optional integrity-check override**: a signal to skip verifying the
-  archive's integrity before restoring it.
-- **S3 access information**: whatever is required to read from the
-  specified S3-compatible storage location (access key, secret, region,
-  endpoint, and path-style addressing preference), supplied through the
-  environment rather than as a direct input value.
+- **Confirmation flag**: `--confirm`, an explicit signal that authorizes
+  real changes; its absence means no changes may be made.
+- **Optional staging location**: a staging base directory supplied through
+  `--staging`, or an operating-system temporary directory when omitted.
+- **Optional integrity-check override**: `--skip-checksum`, a signal to
+  skip the size-based integrity check before restoring the archive.
+- **S3 access information**: supplied only through the environment variables
+  defined in FRAMEWORK.md, never as direct credential input.
 
 ## Outputs
 
@@ -63,7 +62,7 @@ cannot be trusted to be well-formed.
   restored.
 - A **failure report**, produced when a restore cannot proceed or does not
   complete, describing which step failed and confirming whether the target
-  directory was left unchanged.
+  directory was left unchanged or may contain merge-mode partial changes.
 - A **process exit status** indicating success or failure, suitable for
   use in automated scripts.
 
@@ -74,7 +73,12 @@ cannot be trusted to be well-formed.
    created, modified, or deleted.
 2. The product must accept an archive source as either an S3-compatible
    location or a local file path.
-3. The product must accept a target directory as an absolute path.
+3. The product must accept a target directory as an absolute path. If the
+   target does not exist, plan-only execution must not create it; a
+   confirmed execution may create it during Change Application. The final
+   target path component must not be a symbolic link. Symbolic links in
+   existing parent components may be resolved to their real directories
+   before validation.
 4. The product must support two restore modes:
    - `merge`: files present in the archive but not in the target are
      added; files present in both are overwritten with the archive's
@@ -85,8 +89,10 @@ cannot be trusted to be well-formed.
 5. The product must refuse to run in `replace` mode unless the
    confirmation flag is also given.
 6. The product must refuse to treat the following target directories as
-   valid restore targets: an empty value, the filesystem root, and other
-   well-known system-critical directories.
+   valid restore targets: an empty value, any filesystem root, and the
+   well-known system-critical directories defined for the supported
+   operating systems in FRAMEWORK.md. `/tmp` and its children are not
+   system-critical targets by this rule.
 7. The product must verify the archive's integrity before restoring any of
    its contents, unless the operator explicitly opts out of this check.
 8. The product must reject, without restoring any part of the archive, any
@@ -98,8 +104,11 @@ cannot be trusted to be well-formed.
    - a hard link,
    - any file type other than regular files and directories.
 9. The product must confirm there is enough available space to complete
-   the restore before making any change to the target directory, and must
-   refuse to proceed if there is not.
+   archive acquisition and staging before making any change to the target
+   directory, and must refuse to proceed if there is not. The calculation
+   must include the uncompressed size of regular files and temporary
+   staging artifacts. Replace-mode rollback uses atomic renames on the same
+   filesystem and does not require a second data copy.
 10. The product must not allow two restore operations to run against the
     same target directory at the same time; a second attempt while one is
     already running against that target must be rejected.
@@ -107,12 +116,17 @@ cannot be trusted to be well-formed.
     are applied to the target directory, the target directory must be left
     completely unchanged.
 12. If a `replace`-mode restore fails while contents are being applied to
-    the target directory, the product must restore the target directory to
-    its prior contents to the greatest extent possible.
+    the target directory, the product must restore the target directory's
+    prior directory entry using the atomic rename rollback mechanism. A
+    replace operation must be refused before mutation when that mechanism
+    cannot be used, including when staging and target are on different
+    filesystems.
 13. On successful completion, the product must report the archive source,
-    target directory, mode used, and the number of files restored.
+    target directory, mode used, and the number of regular-file archive
+    entries restored. Directories are not included in this count.
 14. On any failure, the product must report which step failed and whether
-    the target directory was left unchanged.
+    the target directory was left unchanged or may contain merge-mode
+    partial changes.
 15. The product must produce a non-zero process exit status on any
     failure, and a zero exit status only on success (including a
     successful plan-only run).
@@ -182,9 +196,12 @@ cannot be trusted to be well-formed.
 - A confirmed restore fails partway through applying changes to the
   target directory.
 
-In every error condition above, the product must make no partial or
-inconsistent change to the target directory beyond what is explicitly
-allowed by the corresponding functional requirement (11 and 12).
+For every error condition before Change Application, the product must make
+no change to the target directory. A merge-mode failure during Change
+Application may leave applied file changes; it must remove temporary
+artifacts and report that the target may be partially changed. A
+replace-mode failure during Change Application must use the atomic rename
+rollback defined in requirement 12.
 
 ## Non-Goals
 
@@ -217,8 +234,8 @@ allowed by the corresponding functional requirement (11 and 12).
   first.
 - Given an archive source that fails to download or read, the target
   directory is unchanged after the attempt.
-- Given a forced failure partway through a replace-mode restore, the
-  target directory afterward matches its pre-restore state.
+- Given a forced failure partway through a replace-mode restore, atomic
+  rename rollback restores the prior target directory entry.
 - Given a successful restore, the reported file count matches the number
   of files actually present in the target directory that originated from
   the archive.
@@ -229,7 +246,9 @@ allowed by the corresponding functional requirement (11 and 12).
   committing to it, every time.
 - No archive, regardless of its internal contents, can cause a change
   outside the specified target directory.
-- No failed restore attempt ever leaves the target directory in a state
-  worse than, or inconsistent with, its state before the attempt.
+- No failure before Change Application changes the target directory, and a
+  failed replace application restores the prior target directory entry
+  through atomic rename rollback. Merge-mode application failures are
+  reported as potentially partial and leave no temporary artifacts.
 - The product behaves identically regardless of which service's storage
   is being restored.

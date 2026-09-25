@@ -6,6 +6,10 @@ This document defines what remains to be implemented. It is an execution checkli
 
 A phase is complete only when every task in it satisfies its acceptance criteria.
 
+Execute exactly one task at a time, in document order. Do not begin a later
+task until the current task's implementation, tests, and acceptance criteria
+are complete.
+
 ---
 
 ### Phase 1 — Invocation Safety Baseline
@@ -77,9 +81,15 @@ A phase is complete only when every task in it satisfies its acceptance criteria
 - [ ] **Task 5.2 — Perform a replace restore**
   - **Acceptance Criteria**
     - Given authorization and replace mode, the target directory's contents after the operation are exactly the archive's contents — nothing more, nothing less.
-- [ ] **Task 5.3 — Preserve the target when execution is interrupted**
+- [ ] **Task 5.3 — Recover safely when execution is interrupted**
   - **Acceptance Criteria**
-    - Given a forced interruption at any point after the archive has been acquired and before the restore completes, the target directory afterward is either fully unchanged from its pre-operation state or fully restored to it — never left in a mixed or partial state.
+    - Given a forced interruption during a replace-mode restore, the
+      atomic rename rollback restores the prior target directory entry
+      before the operation reports failure; the target is never left in a
+      mixed or partial replace state.
+    - Given a forced interruption during a merge-mode restore, all staging,
+      temporary, and backup artifacts are cleaned, and the failure report
+      states that changes already applied to the target may remain.
 
 ---
 
@@ -89,7 +99,8 @@ A phase is complete only when every task in it satisfies its acceptance criteria
   - **Acceptance Criteria**
     - Every invocation, regardless of outcome, produces a report that identifies the archive source, the target, the mode, and the outcome (planned, restored, or failed).
     - A successful preview and a successful execution are each reported with the affected file count.
-    - A failure is reported with the reason and whether the target was left unchanged.
+    - A failure is reported with the reason and whether the target was left
+      unchanged or may contain merge-mode partial changes.
 - [ ] **Task 6.2 — Produce an automation-friendly result signal**
   - **Acceptance Criteria**
     - Every invocation that ends in success (including a successful preview) produces a result signal an automated caller can use to confirm success.

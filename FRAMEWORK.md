@@ -111,10 +111,10 @@ No backend service, no database, no web server, no daemon process, no
 long-running background process. The application starts, performs one
 restore or plan-only operation, and exits.
 
-Each component defined in ARCHITECTURE.md maps to exactly one internal
-package (see Directory Structure). A package must not implement
-responsibilities belonging to another component's boundary as defined in
-ARCHITECTURE.md's Responsibility Boundaries section. In particular:
+Each implementation package maps to one coherent group of adjacent
+responsibilities from ARCHITECTURE.md (see Directory Structure). A package
+may group the explicitly listed related components, but must not implement
+responsibilities belonging to another component's boundary. In particular:
 
 ```text
 Only the package implementing Change Application may write to the target
@@ -133,7 +133,14 @@ authorization must not be a parameter to this package's planning function.
 ```
 
 The staging directory must be created fresh per invocation and must never
-be the target directory or any ancestor/descendant of it.
+be the target directory or any ancestor/descendant of it. If a staging base
+does not exist, the implementation creates the base and then creates a
+unique child directory for the invocation. The resolved target and staging
+paths must be compared after resolving existing parent symlinks.
+
+Replace-mode application requires target and staging to be on the same
+filesystem so the atomic rename rollback sequence can be used. A request
+that cannot satisfy this condition must fail before target mutation.
 
 ---
 
@@ -171,6 +178,36 @@ shared/
 Package boundaries follow ARCHITECTURE.md's component boundaries, not
 convenience.
 
+The restore invocation uses these standard-library `flag` options:
+
+```text
+--source          required; /absolute/path/archive.tar.gz or s3://bucket/key
+--target          required; absolute target directory path
+--mode            optional; merge (default) or replace
+--confirm         optional authorization for Change Application
+--staging         optional staging base directory
+--skip-checksum   optional; skip only the size-based integrity comparison
+```
+
+The final target path component must not be a symbolic link. Existing parent
+symbolic links may be resolved before target validation. A target that does
+not exist is valid for a confirmed invocation and is created only by Change
+Application; plan-only validation and planning never create it.
+
+For target safety, the following paths are rejected as targets:
+
+```text
+POSIX:   /, /bin, /boot, /dev, /etc, /home, /lib, /lib64, /media, /mnt,
+         /opt, /proc, /root, /run, /sbin, /srv, /sys, /usr, /var
+macOS:   /System, /Library, /Applications, /Users, /Volumes
+Windows: any volume root, %SystemRoot%, %ProgramFiles%,
+         %ProgramFiles(x86)%, %ProgramData%, %SystemDrive%\Users,
+         %SystemDrive%\Recovery, %SystemDrive%\System Volume Information
+```
+
+The filesystem root for every mounted volume is rejected. `/tmp` and its
+children are permitted unless they match another protected path.
+
 ---
 
 ## Testing Rules
@@ -191,19 +228,18 @@ fake implementation for unit-level tests.
 
 ```text
 S3 is an EXTERNAL_BOUNDARY (per AGENTS.md). Its required live test target
-is a locally run, S3-compatible object storage server (e.g. MinIO) that
-this project starts and controls for testing — never Amazon's own S3
-service.
+is a locally run RustFS S3-compatible object storage server that this
+project starts and controls for testing — never Amazon's own S3 service.
 ```
 
 A fake or `httptest`-based stand-in satisfies unit-level tests only; it
 does not satisfy AGENTS.md's E2E requirement for this boundary. The E2E
 test performs a real upload and a real download against the locally run
-S3-compatible server, through the same AWS SDK v2 code path used in
-production, switched to that server only via the already-defined
-`AWS_ENDPOINT_URL` and `AWS_S3_FORCE_PATH_STYLE` settings — no
-test-only code path. No AWS account, real AWS credentials, or network
-access to Amazon's infrastructure is required to satisfy this.
+RustFS server, through the same AWS SDK v2 code path used in production,
+switched to that server only via the already-defined `AWS_ENDPOINT_URL`
+and `AWS_S3_FORCE_PATH_STYLE` settings — no test-only code path. No AWS
+account, real AWS credentials, or network access to Amazon's infrastructure
+is required to satisfy this.
 
 ```text
 No test may depend on real available-disk-space state of the test-runner
@@ -217,7 +253,7 @@ Required test coverage (traceable to PRODUCT_SPEC.md Acceptance Criteria
 and ARCHITECTURE.md Architectural Invariants):
 
 - An end-to-end test performing a real upload and a real download against
-  the locally run S3-compatible server, exercising the same acquisition
+  the locally run RustFS server, exercising the same acquisition
   code path used in production. This satisfies AGENTS.md's EXTERNAL_BOUNDARY
   E2E requirement for the S3 source; it is required, not optional.
 - S3 and local source acquisition (unit-level, against the fake/abstracted
