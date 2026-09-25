@@ -17,17 +17,17 @@ func TestAcquireLocalUsesExistingFileWithoutRemoteAccess(t *testing.T) {
 		t.Fatalf("WriteFile() error = %v", err)
 	}
 
-	artifact, err := acquireLocal(path)
+	artifact, err := acquireLocal(path, false)
 	if err != nil {
 		t.Fatalf("acquireLocal() error = %v", err)
 	}
-	if artifact.Path != path || artifact.Source != path || artifact.Cleanup != nil {
+	if artifact.Path != path || artifact.Source != path || artifact.Size != int64(len("archive")) || artifact.Cleanup != nil {
 		t.Fatalf("unexpected local artifact: %+v", artifact)
 	}
 }
 
 func TestAcquireLocalRejectsUnreadableOrMissingSource(t *testing.T) {
-	_, err := acquireLocal(filepath.Join(t.TempDir(), "missing.tar.gz"))
+	_, err := acquireLocal(filepath.Join(t.TempDir(), "missing.tar.gz"), false)
 	if err == nil {
 		t.Fatal("acquireLocal() unexpectedly succeeded")
 	}
@@ -35,7 +35,7 @@ func TestAcquireLocalRejectsUnreadableOrMissingSource(t *testing.T) {
 
 func TestAcquireS3DownloadsThroughClient(t *testing.T) {
 	client := fakeS3Client{body: "archive from RustFS"}
-	artifact, err := acquireS3(context.Background(), "s3://bucket/path/archive.tar.gz", client)
+	artifact, err := acquireS3(context.Background(), "s3://bucket/path/archive.tar.gz", client, false)
 	if err != nil {
 		t.Fatalf("acquireS3() error = %v", err)
 	}
@@ -71,20 +71,53 @@ func TestParseS3Source(t *testing.T) {
 }
 
 func TestAcquireS3RejectsRequestFailure(t *testing.T) {
-	_, err := acquireS3(context.Background(), "s3://bucket/archive.tar.gz", fakeS3Client{err: io.ErrUnexpectedEOF})
+	_, err := acquireS3(context.Background(), "s3://bucket/archive.tar.gz", fakeS3Client{err: io.ErrUnexpectedEOF}, false)
 	if err == nil || !strings.Contains(err.Error(), "downloading") {
 		t.Fatalf("acquireS3() error = %v", err)
 	}
 }
 
+func TestAcquireS3RejectsSizeMismatch(t *testing.T) {
+	_, err := acquireS3(context.Background(), "s3://bucket/archive.tar.gz", fakeS3Client{
+		body:          "short",
+		contentLength: 100,
+	}, false)
+	if err == nil || !strings.Contains(err.Error(), "size mismatch") {
+		t.Fatalf("acquireS3() error = %v", err)
+	}
+}
+
+func TestAcquireS3SkipChecksumAllowsSizeMismatch(t *testing.T) {
+	client := fakeS3Client{body: "short", contentLength: 100}
+	artifact, err := acquireS3(context.Background(), "s3://bucket/archive.tar.gz", client, true)
+	if err != nil {
+		t.Fatalf("acquireS3() error = %v", err)
+	}
+	defer artifact.Cleanup()
+}
+
+func TestVerifySizeRejectsTruncatedReader(t *testing.T) {
+	if err := verifySize(strings.NewReader("short"), 100); err == nil || !strings.Contains(err.Error(), "size mismatch") {
+		t.Fatalf("verifySize() error = %v", err)
+	}
+}
+
 type fakeS3Client struct {
-	body string
-	err  error
+	body          string
+	contentLength int64
+	err           error
 }
 
 func (client fakeS3Client) GetObject(context.Context, *s3.GetObjectInput, ...func(*s3.Options)) (*s3.GetObjectOutput, error) {
 	if client.err != nil {
 		return nil, client.err
 	}
-	return &s3.GetObjectOutput{Body: io.NopCloser(strings.NewReader(client.body))}, nil
+	contentLength := client.contentLength
+	if contentLength == 0 {
+		contentLength = int64(len(client.body))
+	}
+	return &s3.GetObjectOutput{
+		Body:          io.NopCloser(strings.NewReader(client.body)),
+		ContentLength: &contentLength,
+	}, nil
 }

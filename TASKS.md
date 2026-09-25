@@ -36,7 +36,7 @@ are complete.
     - Given a valid remote archive location, the archive is retrieved and made available for the rest of the operation.
     - Given a valid local archive path, the archive is used directly without requiring any remote access.
     - Given an invalid or unreachable source of either kind, the operation fails and the target directory is unaffected.
-- [ ] **Task 2.2 — Detect incomplete or malformed archive transfers**
+- [x] **Task 2.2 — Detect incomplete or malformed archive transfers**
   - **Acceptance Criteria**
     - Given an archive that was only partially retrieved, the operation fails before the archive's contents are examined further, and the target directory is unaffected.
     - Given a file that is not a valid compressed archive, the operation fails with a report identifying that the archive itself is invalid, and the target directory is unaffected.

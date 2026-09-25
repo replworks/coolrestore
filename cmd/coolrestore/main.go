@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/replworks/coolrestore/internal/archive"
 	"github.com/replworks/coolrestore/internal/cli"
 	"github.com/replworks/coolrestore/internal/lock"
 	"github.com/replworks/coolrestore/internal/restore"
@@ -29,8 +30,13 @@ func run(args []string) error {
 		return err
 	}
 
-	artifact, err := source.Acquire(context.Background(), invocation.Source)
+	artifact, err := source.Acquire(context.Background(), invocation.Source, invocation.SkipChecksum)
 	if err != nil {
+		_ = targetLock.Release()
+		return err
+	}
+	if err := archive.ValidateTarGz(artifact.Path); err != nil {
+		_ = artifact.CleanupIfNeeded()
 		_ = targetLock.Release()
 		return err
 	}
@@ -43,10 +49,7 @@ func run(args []string) error {
 			return fmt.Errorf("restore application is not implemented yet")
 		},
 	)
-	var cleanupErr error
-	if artifact.Cleanup != nil {
-		cleanupErr = artifact.Cleanup()
-	}
+	cleanupErr := artifact.CleanupIfNeeded()
 	releaseErr := targetLock.Release()
 	if runErr != nil {
 		return runErr

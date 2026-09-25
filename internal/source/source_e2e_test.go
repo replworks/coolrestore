@@ -64,7 +64,7 @@ func TestRustFSE2E(t *testing.T) {
 		t.Fatalf("PutObject() error = %v", err)
 	}
 
-	artifact, err := Acquire(ctx, "s3://"+bucket+"/"+key)
+	artifact, err := Acquire(ctx, "s3://"+bucket+"/"+key, false)
 	if err != nil {
 		t.Fatalf("Acquire() error = %v", err)
 	}

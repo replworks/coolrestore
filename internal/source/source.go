@@ -23,7 +23,17 @@ import (
 type Artifact struct {
 	Path    string
 	Source  string
+	Size    int64
 	Cleanup func() error
+}
+
+// CleanupIfNeeded removes temporary acquisition data when the artifact owns
+// it. Local artifacts require no cleanup.
+func (artifact Artifact) CleanupIfNeeded() error {
+	if artifact.Cleanup == nil {
+		return nil
+	}
+	return artifact.Cleanup()
 }
 
 // S3API is the small AWS SDK surface required for archive acquisition.
@@ -33,18 +43,18 @@ type S3API interface {
 
 // Acquire makes source available as a local archive file. It does not inspect
 // archive contents; integrity and structural validation are later stages.
-func Acquire(ctx context.Context, source string) (Artifact, error) {
+func Acquire(ctx context.Context, source string, skipChecksum bool) (Artifact, error) {
 	if strings.HasPrefix(source, "s3://") {
 		client, err := newS3Client(ctx)
 		if err != nil {
 			return Artifact{}, err
 		}
-		return acquireS3(ctx, source, client)
+		return acquireS3(ctx, source, client, skipChecksum)
 	}
-	return acquireLocal(source)
+	return acquireLocal(source, skipChecksum)
 }
 
-func acquireLocal(path string) (Artifact, error) {
+func acquireLocal(path string, skipChecksum bool) (Artifact, error) {
 	info, err := os.Stat(path)
 	if err != nil {
 		return Artifact{}, fmt.Errorf("opening local archive %q: %w", path, err)
@@ -56,13 +66,19 @@ func acquireLocal(path string) (Artifact, error) {
 	if err != nil {
 		return Artifact{}, fmt.Errorf("reading local archive %q: %w", path, err)
 	}
+	if !skipChecksum {
+		if err := verifySize(file, info.Size()); err != nil {
+			_ = file.Close()
+			return Artifact{}, fmt.Errorf("verifying local archive %q: %w", path, err)
+		}
+	}
 	if err := file.Close(); err != nil {
 		return Artifact{}, fmt.Errorf("closing local archive %q: %w", path, err)
 	}
-	return Artifact{Path: path, Source: path}, nil
+	return Artifact{Path: path, Source: path, Size: info.Size()}, nil
 }
 
-func acquireS3(ctx context.Context, source string, client S3API) (Artifact, error) {
+func acquireS3(ctx context.Context, source string, client S3API, skipChecksum bool) (Artifact, error) {
 	bucket, key, err := parseS3Source(source)
 	if err != nil {
 		return Artifact{}, err
@@ -90,15 +106,45 @@ func acquireS3(ctx context.Context, source string, client S3API) (Artifact, erro
 		_ = cleanup()
 		return Artifact{}, fmt.Errorf("downloading %s: %w", source, err)
 	}
-	_, copyErr := io.Copy(file, output.Body)
+	if output == nil || output.Body == nil {
+		_ = file.Close()
+		_ = cleanup()
+		return Artifact{}, fmt.Errorf("downloading %s: response body is missing", source)
+	}
+	bytesCopied, copyErr := io.Copy(file, output.Body)
 	bodyCloseErr := output.Body.Close()
 	fileCloseErr := file.Close()
 	if err := errors.Join(copyErr, bodyCloseErr, fileCloseErr); err != nil {
 		_ = cleanup()
 		return Artifact{}, fmt.Errorf("saving downloaded archive %s: %w", source, err)
 	}
+	if !skipChecksum {
+		if output.ContentLength == nil {
+			_ = cleanup()
+			return Artifact{}, fmt.Errorf("verifying downloaded archive %s: object size is missing", source)
+		}
+		if err := compareSize(bytesCopied, *output.ContentLength); err != nil {
+			_ = cleanup()
+			return Artifact{}, fmt.Errorf("verifying downloaded archive %s: %w", source, err)
+		}
+	}
 
-	return Artifact{Path: archivePath, Source: source, Cleanup: cleanup}, nil
+	return Artifact{Path: archivePath, Source: source, Size: bytesCopied, Cleanup: cleanup}, nil
+}
+
+func verifySize(reader io.Reader, expected int64) error {
+	actual, err := io.Copy(io.Discard, reader)
+	if err != nil {
+		return err
+	}
+	return compareSize(actual, expected)
+}
+
+func compareSize(actual, expected int64) error {
+	if actual != expected {
+		return fmt.Errorf("size mismatch: expected %d bytes, read %d bytes", expected, actual)
+	}
+	return nil
 }
 
 func parseS3Source(source string) (string, string, error) {
