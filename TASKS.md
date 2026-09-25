@@ -110,7 +110,7 @@ are complete.
 
 ### Phase 7 — Distribution Readiness
 
-- [ ] **Task 7.1 — Make the tool runnable in its intended operating environment**
+- [x] **Task 7.1 — Make the tool runnable in its intended operating environment**
   - **Acceptance Criteria**
     - An operator can obtain a runnable copy of the tool for the server environments it is intended to run on, without needing a local development setup to build it themselves.
     - The tool runs correctly in that environment using only what is already present on a typical target server plus network access to the archive source.
