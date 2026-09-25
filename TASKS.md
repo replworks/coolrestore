@@ -73,7 +73,7 @@ are complete.
 
 ### Phase 5 — Restore Execution
 
-- [ ] **Task 5.1 — Perform a merge restore**
+- [x] **Task 5.1 — Perform a merge restore**
   - **Acceptance Criteria**
     - Given authorization and merge mode, every file present in the archive exists in the target afterward with the archive's content.
     - Every file that existed only in the target beforehand still exists, unchanged, afterward.

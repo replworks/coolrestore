@@ -61,8 +61,11 @@ func run(args []string) error {
 		func() (restore.Plan, error) {
 			return restore.PlanRestore(staging.Dir, invocation.Target, restore.Mode(invocation.Mode))
 		},
-		func(restore.Plan) error {
-			return fmt.Errorf("restore application is not implemented yet")
+		func(plan restore.Plan) error {
+			if restore.Mode(invocation.Mode) == restore.ModeMerge {
+				return restore.ApplyMerge(staging.Dir, invocation.Target, plan)
+			}
+			return fmt.Errorf("restore application for %s mode is not implemented yet", plan.Mode)
 		},
 	)
 	stagingCleanupErr := staging.Cleanup()
