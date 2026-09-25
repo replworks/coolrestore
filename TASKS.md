@@ -73,15 +73,15 @@ are complete.
 
 ### Phase 5 — Restore Execution
 
-- [ ] **Task 5.1 — Perform a merge restore**
+- [x] **Task 5.1 — Perform a merge restore**
   - **Acceptance Criteria**
     - Given authorization and merge mode, every file present in the archive exists in the target afterward with the archive's content.
     - Every file that existed only in the target beforehand still exists, unchanged, afterward.
     - No file is deleted from the target as a result of this operation.
-- [ ] **Task 5.2 — Perform a replace restore**
+- [x] **Task 5.2 — Perform a replace restore**
   - **Acceptance Criteria**
     - Given authorization and replace mode, the target directory's contents after the operation are exactly the archive's contents — nothing more, nothing less.
-- [ ] **Task 5.3 — Recover safely when execution is interrupted**
+- [x] **Task 5.3 — Recover safely when execution is interrupted**
   - **Acceptance Criteria**
     - Given a forced interruption during a replace-mode restore, the
       atomic rename rollback restores the prior target directory entry

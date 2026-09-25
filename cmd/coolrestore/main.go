@@ -57,18 +57,27 @@ func run(args []string) error {
 		return err
 	}
 
-	plan, _, runErr := restore.Run(invocation.Confirm,
+	plan, outcome, runErr := restore.Run(invocation.Confirm,
 		func() (restore.Plan, error) {
 			return restore.PlanRestore(staging.Dir, invocation.Target, restore.Mode(invocation.Mode))
 		},
-		func(restore.Plan) error {
-			return fmt.Errorf("restore application is not implemented yet")
+		func(plan restore.Plan) error {
+			if restore.Mode(invocation.Mode) == restore.ModeMerge {
+				return restore.ApplyMerge(staging.Dir, invocation.Target, plan)
+			}
+			return restore.ApplyReplace(staging.Dir, invocation.Target, plan)
 		},
 	)
 	stagingCleanupErr := staging.Cleanup()
 	cleanupErr := artifact.CleanupIfNeeded()
 	releaseErr := targetLock.Release()
 	if runErr != nil {
+		if outcome == restore.OutcomeApplied {
+			if restore.Mode(invocation.Mode) == restore.ModeReplace {
+				return fmt.Errorf("change application failed; target was restored by atomic rollback: %w", runErr)
+			}
+			return fmt.Errorf("change application failed; target may contain partial changes: %w", runErr)
+		}
 		return runErr
 	}
 	if cleanupErr != nil {
