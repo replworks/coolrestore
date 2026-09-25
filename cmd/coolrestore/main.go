@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/replworks/coolrestore/internal/archive"
@@ -27,34 +28,34 @@ func run(args []string) error {
 
 	targetLock, err := lock.Acquire(invocation.Target)
 	if err != nil {
-		return err
+		return reportFailure(invocation, "target lock", "unchanged", err)
 	}
 
 	artifact, err := source.Acquire(context.Background(), invocation.Source, invocation.SkipChecksum)
 	if err != nil {
 		_ = targetLock.Release()
-		return err
+		return reportFailure(invocation, "archive acquisition", "unchanged", err)
 	}
 	if err := archive.ValidateTarGz(artifact.Path); err != nil {
 		_ = artifact.CleanupIfNeeded()
 		_ = targetLock.Release()
-		return err
+		return reportFailure(invocation, "archive validation", "unchanged", err)
 	}
 	if _, err := archive.CheckCapacity(artifact.Path, invocation.Staging, archive.OSSpaceChecker{}); err != nil {
 		_ = artifact.CleanupIfNeeded()
 		_ = targetLock.Release()
-		return err
+		return reportFailure(invocation, "capacity check", "unchanged", err)
 	}
 	if err := archive.ValidateTarGzSafety(artifact.Path); err != nil {
 		_ = artifact.CleanupIfNeeded()
 		_ = targetLock.Release()
-		return err
+		return reportFailure(invocation, "content safety validation", "unchanged", err)
 	}
 	staging, err := archive.StageTarGz(artifact.Path, invocation.Target, invocation.Staging)
 	if err != nil {
 		_ = artifact.CleanupIfNeeded()
 		_ = targetLock.Release()
-		return err
+		return reportFailure(invocation, "staged extraction", "unchanged", err)
 	}
 
 	plan, outcome, runErr := restore.Run(invocation.Confirm,
@@ -74,39 +75,53 @@ func run(args []string) error {
 	if runErr != nil {
 		if outcome == restore.OutcomeApplied {
 			if restore.Mode(invocation.Mode) == restore.ModeReplace {
-				return fmt.Errorf("change application failed; target was restored by atomic rollback: %w", runErr)
+				return reportFailure(invocation, "change application", "restored by atomic rollback", runErr)
 			}
-			return fmt.Errorf("change application failed; target may contain partial changes: %w", runErr)
+			return reportFailure(invocation, "change application", "may contain partial changes", runErr)
 		}
-		return runErr
+		return reportFailure(invocation, "restore planning", "unchanged", runErr)
 	}
 	if cleanupErr != nil {
-		return cleanupErr
+		return reportFailure(invocation, "archive cleanup", "may contain changes", cleanupErr)
 	}
 	if stagingCleanupErr != nil {
-		return stagingCleanupErr
+		return reportFailure(invocation, "staging cleanup", "may contain changes", stagingCleanupErr)
+	}
+	if releaseErr != nil {
+		return reportFailure(invocation, "target lock release", "may contain changes", releaseErr)
 	}
 	if !invocation.Confirm {
-		printPlan(plan)
+		printPlan(os.Stdout, invocation, plan)
+		return nil
 	}
-	return releaseErr
+	printResult(os.Stdout, invocation, plan)
+	return nil
 }
 
-func printPlan(plan restore.Plan) {
-	fmt.Printf("plan-only restore (mode=%s, regular files=%d)\n", plan.Mode, plan.RegularFiles)
+func printPlan(w io.Writer, invocation cli.Invocation, plan restore.Plan) {
+	fmt.Fprintf(w, "source: %s\ntarget: %s\nmode: %s\noutcome: planned\nregular_files: %d\n", invocation.Source, invocation.Target, plan.Mode, plan.RegularFiles)
 	switch plan.Mode {
 	case restore.ModeMerge:
-		printPaths("added", plan.Added)
-		printPaths("overwritten", plan.Overwritten)
+		printPaths(w, "added", plan.Added)
+		printPaths(w, "overwritten", plan.Overwritten)
 	case restore.ModeReplace:
-		printPaths("result", plan.ResultPaths)
-		printPaths("removed", plan.Removed)
+		printPaths(w, "result", plan.ResultPaths)
+		printPaths(w, "removed", plan.Removed)
 	}
 }
 
-func printPaths(label string, paths []string) {
-	fmt.Printf("%s:\n", label)
+func printResult(w io.Writer, invocation cli.Invocation, plan restore.Plan) {
+	fmt.Fprintf(w, "source: %s\ntarget: %s\nmode: %s\noutcome: restored\nregular_files: %d\n", invocation.Source, invocation.Target, plan.Mode, plan.RegularFiles)
+}
+
+func printPaths(w io.Writer, label string, paths []string) {
+	fmt.Fprintf(w, "%s:\n", label)
 	for _, path := range paths {
-		fmt.Printf("  %s\n", path)
+		fmt.Fprintf(w, "  %s\n", path)
 	}
+}
+
+func reportFailure(invocation cli.Invocation, step, targetState string, err error) error {
+	fmt.Fprintf(os.Stderr, "source: %s\ntarget: %s\nmode: %s\noutcome: failed\nstep: %s\ntarget_state: %s\nerror: %v\n", invocation.Source, invocation.Target, invocation.Mode, step, targetState, err)
+	return err
 }
