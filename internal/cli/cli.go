@@ -122,7 +122,7 @@ func isProtectedTargetForOS(target, goos string) bool {
 func protectedTargets(goos string) []string {
 	switch goos {
 	case "windows":
-		return []string{`C:\\`, `C:\\Windows`, `C:\\Program Files`, `C:\\Program Files (x86)`, `C:\\ProgramData`, `C:\\Users`, `C:\\Recovery`, `C:\\System Volume Information`}
+		return []string{`C:\`, `C:\Windows`, `C:\Program Files`, `C:\Program Files (x86)`, `C:\ProgramData`, `C:\Users`, `C:\Recovery`, `C:\System Volume Information`}
 	case "darwin":
 		return []string{"/System", "/Library", "/Applications", "/Users", "/Volumes"}
 	default:

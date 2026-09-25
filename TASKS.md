@@ -22,7 +22,7 @@ are complete.
   - **Acceptance Criteria**
     - Given any valid restore request without explicit authorization, no file under the target directory is created, modified, or deleted, regardless of source, mode, or archive contents.
     - The absence of authorization never needs to be stated more than once; it is the default behavior of every request.
-- [ ] **Task 1.3 — Prevent concurrent operations against the same target**
+- [x] **Task 1.3 — Prevent concurrent operations against the same target**
   - **Acceptance Criteria**
     - Given a restore operation already in progress against a target, a second operation started against the same target is rejected immediately and does not affect the first operation's progress or outcome.
     - Given two operations against two different targets, both proceed independently and neither is rejected because of the other.
