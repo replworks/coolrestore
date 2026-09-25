@@ -31,16 +31,16 @@ are complete.
 
 ### Phase 2 — Archive Acquisition and Basic Verification
 
-- [ ] **Task 2.1 — Obtain the archive regardless of where it is stored**
+- [x] **Task 2.1 — Obtain the archive regardless of where it is stored**
   - **Acceptance Criteria**
     - Given a valid remote archive location, the archive is retrieved and made available for the rest of the operation.
     - Given a valid local archive path, the archive is used directly without requiring any remote access.
     - Given an invalid or unreachable source of either kind, the operation fails and the target directory is unaffected.
-- [ ] **Task 2.2 — Detect incomplete or malformed archive transfers**
+- [x] **Task 2.2 — Detect incomplete or malformed archive transfers**
   - **Acceptance Criteria**
     - Given an archive that was only partially retrieved, the operation fails before the archive's contents are examined further, and the target directory is unaffected.
     - Given a file that is not a valid compressed archive, the operation fails with a report identifying that the archive itself is invalid, and the target directory is unaffected.
-- [ ] **Task 2.3 — Confirm sufficient space before proceeding**
+- [x] **Task 2.3 — Confirm sufficient space before proceeding**
   - **Acceptance Criteria**
     - Given a case where the available space at the working location is insufficient for the archive's contents, the operation fails before any extraction occurs, and the target directory is unaffected.
     - Given sufficient available space, the operation proceeds past this stage.
