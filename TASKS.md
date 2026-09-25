@@ -52,7 +52,7 @@ are complete.
 - [x] **Task 3.1 — Keep archive extraction isolated from the restore target**
   - **Acceptance Criteria**
     - At no point during extraction does any archive content appear under the target directory; this holds even when the operation ultimately fails during or after extraction.
-- [ ] **Task 3.2 — Reject archives containing unsafe content**
+- [x] **Task 3.2 — Reject archives containing unsafe content**
   - **Acceptance Criteria**
     - Given an archive containing an entry that would resolve outside the target directory, act as a link leaving the target directory, act as a hard link, or introduce a disallowed file type, the entire operation is rejected before anything is applied to the target directory.
     - The failure report identifies which entries were rejected and why.

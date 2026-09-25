@@ -64,9 +64,9 @@ Integrity Verification
         ↓
 Capacity Check (staging location)
         ↓
-Staged Extraction
-        ↓
 Content Safety Validation
+        ↓
+Staged Extraction
         ↓
 Restore Planning (reads target, staged content, and mode; writes nothing)
         ↓
@@ -130,13 +130,13 @@ boundaries.
 
 ### 6. Staged Extractor
 
-- **Inputs**: The verified archive artifact and a staging location.
+- **Inputs**: The safety-validated archive artifact and a staging location.
 - **Outputs**: A fully extracted staging directory, or an explicit
   extraction failure.
 
 ### 7. Content Safety Validator
 
-- **Inputs**: The staged extraction result.
+- **Inputs**: The verified archive artifact.
 - **Outputs**: A pass/fail safety result, itemizing any rejected entries
   by path and reason.
 
@@ -194,14 +194,14 @@ boundaries.
    complete without exhausting available space at the staging location.
    Responsible for treating insufficient space as a hard stop.
 
-6. **Staged Extractor** — Turn a verified archive into a fully materialized
+6. **Staged Extractor** — Turn a safety-validated archive into a fully materialized
    directory tree, without ever writing outside the isolated staging
    location.
 
 7. **Content Safety Validator** — Establish, entry by entry, that nothing
-   staged would escape, subvert, or misuse the target directory if it were
-   applied. Responsible for a complete, itemized rejection when unsafe
-   content is found, not a partial pass.
+   in the archive would escape, subvert, or misuse the target directory if
+   it were staged or applied. Responsible for a complete, itemized rejection
+   when unsafe content is found, not a partial pass.
 
 8. **Restore Planner** — Be the single place where "what should change"
    is decided. Responsible for producing an identical plan whether the
@@ -263,8 +263,8 @@ boundaries.
 ## Data Flow
 
 The archive flows one-directionally through acquisition, verification,
-capacity checking, extraction, and safety validation. At no point in this
-chain is the target directory read or written.
+capacity checking, safety validation, and isolated extraction. At no point
+in this chain is the target directory read or written.
 
 At Restore Planning, the target directory is read for the first and only
 time before a possible mutation, solely to compute overlaps for merge mode
@@ -314,10 +314,10 @@ It does not consume raw archive or target directory data directly.
   untouched; lock released.
 - **Capacity check failure**: halts before extraction; target untouched;
   lock released.
-- **Extraction failure**: halts before Content Safety Validation; staging
-  cleaned up; target untouched; lock released.
-- **Content safety validation failure**: halts before Restore Planning;
-  staging cleaned up; target untouched; lock released.
+- **Content safety validation failure**: halts before Staged Extraction;
+  target untouched; lock released.
+- **Extraction failure**: halts before Restore Planning; staging cleaned
+  up; target untouched; lock released.
 - **Restore Planning failure** (e.g. the target directory cannot be read):
   halts before any authorization check; target untouched; lock released.
 - **Unauthorized invocation reaching the end of Restore Planning**: this is

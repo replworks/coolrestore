@@ -45,6 +45,11 @@ func run(args []string) error {
 		_ = targetLock.Release()
 		return err
 	}
+	if err := archive.ValidateTarGzSafety(artifact.Path); err != nil {
+		_ = artifact.CleanupIfNeeded()
+		_ = targetLock.Release()
+		return err
+	}
 	staging, err := archive.StageTarGz(artifact.Path, invocation.Target, invocation.Staging)
 	if err != nil {
 		_ = artifact.CleanupIfNeeded()
