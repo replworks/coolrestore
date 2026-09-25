@@ -102,6 +102,15 @@ func TestVerifySizeRejectsTruncatedReader(t *testing.T) {
 	}
 }
 
+func TestCredentialWrapperHintDoesNotContainCredentialValues(t *testing.T) {
+	if strings.Contains(credentialWrapperHint, "AWS_SECRET_ACCESS_KEY=") {
+		t.Fatal("credential wrapper hint contains a credential assignment")
+	}
+	if !strings.Contains(credentialWrapperHint, "protected environment wrapper") {
+		t.Fatalf("credential wrapper hint = %q", credentialWrapperHint)
+	}
+}
+
 type fakeS3Client struct {
 	body          string
 	contentLength int64

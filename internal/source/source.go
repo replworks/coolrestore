@@ -17,6 +17,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
+const credentialWrapperHint = "hint: use a protected environment wrapper; see examples/coolrestore-wrapper.sh or the release examples bundle"
+
 // Artifact is an archive made available to later restore stages. Local
 // artifacts point at the supplied file; remote artifacts point at a temporary
 // downloaded file and own its cleanup function.
@@ -158,7 +160,10 @@ func parseS3Source(source string) (string, string, error) {
 func newS3Client(ctx context.Context) (*s3.Client, error) {
 	awsConfig, err := awsconfig.LoadDefaultConfig(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("loading AWS configuration: %w", err)
+		return nil, fmt.Errorf("loading AWS configuration: %w; %s", err, credentialWrapperHint)
+	}
+	if _, err := awsConfig.Credentials.Retrieve(ctx); err != nil {
+		return nil, fmt.Errorf("loading S3 credentials: %w; %s", err, credentialWrapperHint)
 	}
 
 	forcePathStyle, err := forcePathStyleFromEnvironment()

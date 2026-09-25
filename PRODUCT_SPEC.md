@@ -51,7 +51,8 @@ cannot be trusted to be well-formed.
 - **Optional integrity-check override**: `--skip-checksum`, a signal to
   skip the size-based integrity check before restoring the archive.
 - **S3 access information**: supplied only through the environment variables
-  defined in FRAMEWORK.md, never as direct credential input.
+  or AWS SDK default credential provider chain defined in FRAMEWORK.md, never
+  as direct credential input.
 
 ## Outputs
 
@@ -62,7 +63,10 @@ cannot be trusted to be well-formed.
   restored.
 - A **failure report**, produced when a restore cannot proceed or does not
   complete, describing which step failed and confirming whether the target
-  directory was left unchanged or may contain merge-mode partial changes.
+  directory was left unchanged or may contain merge-mode partial changes. If
+  S3 credentials cannot be loaded, the report also gives a non-sensitive hint
+  about the supported environment wrapper mechanism without displaying any
+  credential value.
 - A **process exit status** indicating success or failure, suitable for
   use in automated scripts.
 
@@ -133,6 +137,10 @@ cannot be trusted to be well-formed.
 16. The product must accept a local archive file as a source without
     requiring any S3 access, so a restore can be exercised without
     connectivity to S3-compatible storage.
+17. When an S3 source is used, the product must load credentials only through
+    the configured environment variables or the AWS SDK default credential
+    provider chain. If no credentials are available, it must report the
+    supported wrapper mechanism without displaying credential values.
 
 ## User Flows
 

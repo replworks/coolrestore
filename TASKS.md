@@ -114,6 +114,17 @@ are complete.
   - **Acceptance Criteria**
     - An operator can obtain a runnable copy of the tool for the server environments it is intended to run on, without needing a local development setup to build it themselves.
     - The tool runs correctly in that environment using only what is already present on a typical target server plus network access to the archive source.
+- [x] **Task 7.2 — Provide safe credential wrapper guidance**
+  - **Acceptance Criteria**
+    - Given an S3 restore and credentials supplied through a protected
+      environment wrapper, the tool can acquire the archive without CLI
+      credential arguments.
+    - Given missing S3 credentials, the failure report includes a concise
+      wrapper hint without displaying credential values.
+    - Repository examples contain placeholders only and document the
+      environment-variable wrapper pattern for repeated S3-compatible restores.
+    - Release distribution makes the same wrapper guidance available to
+      operators who obtain the binary without cloning the repository.
 
 ---
 

@@ -1,4 +1,10 @@
-# coolrestore
+# Cool Restore
+
+[![CI](https://github.com/replworks/coolrestore/actions/workflows/ci.yml/badge.svg)](https://github.com/replworks/coolrestore/actions/workflows/ci.yml)
+[![release](https://github.com/replworks/coolrestore/actions/workflows/release.yml/badge.svg)](https://github.com/replworks/coolrestore/actions/workflows/release.yml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/replworks/coolrestore.svg)](https://pkg.go.dev/github.com/replworks/coolrestore)
+[![Go Report Card](https://goreportcard.com/badge/github.com/replworks/coolrestore)](https://goreportcard.com/report/github.com/replworks/coolrestore)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/replworks/coolrestore)](https://github.com/replworks/coolrestore)
 
 > Restore Coolify storage safely after an incident.
 >
@@ -62,6 +68,15 @@ If these variables are not set, the AWS SDK default credential chain is used.
 Credentials are never accepted as command-line flags.
 
 coolrestore does not create or require a persistent configuration file.
+
+For repeated restores, use the wrapper examples in [`examples/`](./examples/) with a protected environment file instead of manually exporting credentials for each command:
+
+```bash
+install -m 600 examples/coolrestore.env.example /etc/coolrestore/env
+export COOLRESTORE_ENV_FILE=/etc/coolrestore/env
+```
+
+Replace the placeholder values before use. The release also includes the examples as `coolrestore-examples.tar.gz` for operators who only download the binary. For a user-specific setup, use `~/.config/coolrestore/env` instead.
 
 ---
 
@@ -188,10 +203,8 @@ coolrestore is designed for infrastructure recovery, not application-level valid
 - Archive contents are extracted into an isolated staging directory first.
 - Staging and target paths may not overlap.
 - A target lock prevents concurrent restores against the same directory.
-- Merge failures clean temporary artifacts but may retain changes already
-  applied.
-- Replace failures restore the previous target directory through atomic rename
-  rollback.
+- Merge failures clean temporary artifacts but may retain changes already applied.
+- Replace failures restore the previous target directory through atomic rename rollback.
 
 The backup archive produced by Coolify is treated as an input object. This tool does not create or require a SHA256 manifest for that archive. SHA256 files attached to GitHub Releases, when present, verify the downloaded coolrestore binary itself.
 
@@ -208,6 +221,8 @@ Verify:
 - `AWS_ENDPOINT_URL` for RustFS or another S3-compatible service
 - `AWS_S3_FORCE_PATH_STYLE=true` when required by the endpoint
 - bucket and object-key permissions
+
+If credentials cannot be loaded, coolrestore prints a short wrapper hint. It never prints credential values. The default system-wide environment file is `/etc/coolrestore/env`; `COOLRESTORE_ENV_FILE` can point to another protected file.
 
 ### Replace mode was rejected
 

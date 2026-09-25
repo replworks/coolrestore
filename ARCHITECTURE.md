@@ -111,10 +111,11 @@ boundaries.
 ### 3. Archive Acquisition
 
 - **Inputs**: The validated archive source description (remote location or
-  local path) and, when remote, whatever access information the
-  environment provides for reaching it.
+  local path) and, when remote, credentials supplied by the configured
+  environment variables or the AWS SDK default credential provider chain.
 - **Outputs**: A locally available archive artifact, or an explicit
-  acquisition failure.
+  acquisition failure. A credential-loading failure remains non-sensitive and
+  never includes credential values.
 
 ### 4. Integrity Verifier
 
@@ -183,7 +184,9 @@ boundaries.
 3. **Archive Acquisition** — Make the archive's bytes available locally,
    regardless of whether they originate remotely or locally. Responsible
    for reporting acquisition failure without ever having touched the
-   target directory.
+   target directory. It uses only the configured environment variables or
+   AWS SDK default credential provider chain and never exposes credential
+   values.
 
 4. **Integrity Verifier** — Establish that the acquired archive is the
    archive that was intended to be restored, before any of its contents
@@ -220,7 +223,9 @@ boundaries.
 10. **Result Reporter** — Translate whatever the flow produced (a plan, an
     applied result, or a failure) into the reports and exit status defined
     in PRODUCT_SPEC.md. Responsible for never altering the substance of
-    what it reports.
+    what it reports. For credential-loading failures, it may add the fixed,
+    non-sensitive wrapper hint defined by the product specification, but it
+    must never print credential values.
 
 ---
 
@@ -251,7 +256,9 @@ boundaries.
   rename or subsequent finalization fails. This sequence is valid only
   when target and staging are on the same filesystem.
 - **Result Reporter** owns communication of outcomes only. It has no
-  authority to alter, retry, or reinterpret the outcome it is given.
+  authority to alter, retry, or reinterpret the outcome it is given. A
+  credential-loading failure may include the fixed wrapper hint, but no
+  credential value.
 - Authorization is a single boolean fact carried by the invocation from
   the Invocation Validator onward. Only the boundary between Restore
   Planner and Change Application checks it; every earlier component is

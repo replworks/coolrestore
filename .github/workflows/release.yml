@@ -36,6 +36,7 @@ jobs:
           mkdir -p dist
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o dist/coolrestore-linux-amd64 ./cmd/coolrestore
           CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -trimpath -ldflags='-s -w' -o dist/coolrestore-linux-arm64 ./cmd/coolrestore
+          tar -czf dist/coolrestore-examples.tar.gz -C examples .
           sha256sum dist/coolrestore-linux-* > dist/SHA256SUMS
 
       - name: Upload release artifacts
