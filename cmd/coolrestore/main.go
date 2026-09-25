@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 
 	"github.com/replworks/coolrestore/internal/cli"
 	"github.com/replworks/coolrestore/internal/lock"
 	"github.com/replworks/coolrestore/internal/restore"
+	"github.com/replworks/coolrestore/internal/source"
 )
 
 func main() {
@@ -27,6 +29,12 @@ func run(args []string) error {
 		return err
 	}
 
+	artifact, err := source.Acquire(context.Background(), invocation.Source)
+	if err != nil {
+		_ = targetLock.Release()
+		return err
+	}
+
 	_, runErr := restore.Run(invocation.Confirm,
 		func() (restore.Plan, error) {
 			return restore.Plan{}, nil
@@ -35,9 +43,16 @@ func run(args []string) error {
 			return fmt.Errorf("restore application is not implemented yet")
 		},
 	)
+	var cleanupErr error
+	if artifact.Cleanup != nil {
+		cleanupErr = artifact.Cleanup()
+	}
 	releaseErr := targetLock.Release()
 	if runErr != nil {
 		return runErr
+	}
+	if cleanupErr != nil {
+		return cleanupErr
 	}
 	return releaseErr
 }

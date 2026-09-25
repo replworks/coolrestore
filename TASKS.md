@@ -31,7 +31,7 @@ are complete.
 
 ### Phase 2 — Archive Acquisition and Basic Verification
 
-- [ ] **Task 2.1 — Obtain the archive regardless of where it is stored**
+- [x] **Task 2.1 — Obtain the archive regardless of where it is stored**
   - **Acceptance Criteria**
     - Given a valid remote archive location, the archive is retrieved and made available for the rest of the operation.
     - Given a valid local archive path, the archive is used directly without requiring any remote access.
