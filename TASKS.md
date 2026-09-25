@@ -18,7 +18,7 @@ are complete.
   - **Acceptance Criteria**
     - Given any invalid or incomplete combination of restore parameters (missing target, missing source, requesting full replacement without explicit authorization, etc.), the operation ends with a failure and no local or remote resource has been accessed.
     - Given a valid combination of parameters, the operation proceeds past this stage.
-- [ ] **Task 1.2 — Default every restore attempt to preview-only**
+- [x] **Task 1.2 — Default every restore attempt to preview-only**
   - **Acceptance Criteria**
     - Given any valid restore request without explicit authorization, no file under the target directory is created, modified, or deleted, regardless of source, mode, or archive contents.
     - The absence of authorization never needs to be stated more than once; it is the default behavior of every request.
