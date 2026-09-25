@@ -95,13 +95,13 @@ are complete.
 
 ### Phase 6 — Operator Reporting
 
-- [ ] **Task 6.1 — Report a clear, consistent outcome for every invocation**
+- [x] **Task 6.1 — Report a clear, consistent outcome for every invocation**
   - **Acceptance Criteria**
     - Every invocation, regardless of outcome, produces a report that identifies the archive source, the target, the mode, and the outcome (planned, restored, or failed).
     - A successful preview and a successful execution are each reported with the affected file count.
     - A failure is reported with the reason and whether the target was left
       unchanged or may contain merge-mode partial changes.
-- [ ] **Task 6.2 — Produce an automation-friendly result signal**
+- [x] **Task 6.2 — Produce an automation-friendly result signal**
   - **Acceptance Criteria**
     - Every invocation that ends in success (including a successful preview) produces a result signal an automated caller can use to confirm success.
     - Every invocation that ends in failure produces a distinguishable result signal, without exception.
