@@ -24,7 +24,7 @@ func TestStageTarGzKeepsTargetUntouched(t *testing.T) {
 	if err != nil {
 		t.Fatalf("StageTarGz() error = %v", err)
 	}
-	defer staging.Cleanup()
+	defer func() { _ = staging.Cleanup() }()
 
 	contents, err := os.ReadFile(sentinel)
 	if err != nil {
@@ -90,7 +90,7 @@ func TestStageTarGzAllowsDefaultTempBaseBesideTarget(t *testing.T) {
 	if err != nil {
 		t.Fatalf("StageTarGz() error = %v", err)
 	}
-	defer staging.Cleanup()
+	defer func() { _ = staging.Cleanup() }()
 	if sameOrDescendant(staging.Dir, target) || sameOrDescendant(target, staging.Dir) {
 		t.Fatalf("staging %q overlaps target %q", staging.Dir, target)
 	}

@@ -16,13 +16,13 @@ func ValidateTarGz(path string) error {
 	if err != nil {
 		return fmt.Errorf("opening archive: %w", err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	gzipReader, err := gzip.NewReader(file)
 	if err != nil {
 		return fmt.Errorf("invalid gzip stream: %w", err)
 	}
-	defer gzipReader.Close()
+	defer func() { _ = gzipReader.Close() }()
 
 	tarReader := tar.NewReader(gzipReader)
 	for {

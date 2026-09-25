@@ -14,7 +14,7 @@ func TestAcquireRejectsSecondLockForSameTarget(t *testing.T) {
 	if err != nil {
 		t.Fatalf("first Acquire() error = %v", err)
 	}
-	defer first.Release()
+	defer func() { _ = first.Release() }()
 
 	second, err := Acquire(target)
 	if second != nil {
@@ -32,13 +32,13 @@ func TestDifferentTargetsCanBeLockedIndependently(t *testing.T) {
 	if err != nil {
 		t.Fatalf("first Acquire() error = %v", err)
 	}
-	defer first.Release()
+	defer func() { _ = first.Release() }()
 
 	second, err := Acquire(filepath.Join(base, "second"))
 	if err != nil {
 		t.Fatalf("second Acquire() error = %v", err)
 	}
-	defer second.Release()
+	defer func() { _ = second.Release() }()
 }
 
 func TestReleaseAllowsLaterAcquisition(t *testing.T) {
@@ -75,7 +75,7 @@ func TestEquivalentParentSymlinkPathsShareLock(t *testing.T) {
 	if err != nil {
 		t.Fatalf("first Acquire() error = %v", err)
 	}
-	defer first.Release()
+	defer func() { _ = first.Release() }()
 
 	second, err := Acquire(filepath.Join(linkParent, "target"))
 	if second != nil {
