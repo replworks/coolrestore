@@ -14,7 +14,7 @@ are complete.
 
 ### Phase 1 — Invocation Safety Baseline
 
-- [ ] **Task 1.1 — Reject invalid restore requests before touching any data**
+- [x] **Task 1.1 — Reject invalid restore requests before touching any data**
   - **Acceptance Criteria**
     - Given any invalid or incomplete combination of restore parameters (missing target, missing source, requesting full replacement without explicit authorization, etc.), the operation ends with a failure and no local or remote resource has been accessed.
     - Given a valid combination of parameters, the operation proceeds past this stage.
