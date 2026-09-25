@@ -13,11 +13,17 @@ import (
 	"github.com/replworks/coolrestore/internal/source"
 )
 
+const (
+	exitSuccess = 0
+	exitFailure = 1
+)
+
 func main() {
 	if err := run(os.Args[1:]); err != nil {
 		fmt.Fprintln(os.Stderr, "restore failed:", err)
-		os.Exit(1)
+		os.Exit(exitFailure)
 	}
+	os.Exit(exitSuccess)
 }
 
 func run(args []string) error {

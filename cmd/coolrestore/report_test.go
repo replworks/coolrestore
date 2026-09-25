@@ -40,3 +40,12 @@ func TestPrintResultContainsRestoredOutcome(t *testing.T) {
 		t.Fatalf("unexpected result report:\n%s", output.String())
 	}
 }
+
+func TestAutomationExitSignals(t *testing.T) {
+	if exitSuccess != 0 {
+		t.Fatalf("success exit code = %d, want 0", exitSuccess)
+	}
+	if exitFailure == 0 {
+		t.Fatal("failure exit code must be non-zero")
+	}
+}

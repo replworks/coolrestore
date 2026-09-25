@@ -101,7 +101,7 @@ are complete.
     - A successful preview and a successful execution are each reported with the affected file count.
     - A failure is reported with the reason and whether the target was left
       unchanged or may contain merge-mode partial changes.
-- [ ] **Task 6.2 — Produce an automation-friendly result signal**
+- [x] **Task 6.2 — Produce an automation-friendly result signal**
   - **Acceptance Criteria**
     - Every invocation that ends in success (including a successful preview) produces a result signal an automated caller can use to confirm success.
     - Every invocation that ends in failure produces a distinguishable result signal, without exception.
