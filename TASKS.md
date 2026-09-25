@@ -62,7 +62,7 @@ are complete.
 
 ### Phase 4 — Restore Planning
 
-- [ ] **Task 4.1 — Determine what a restore would change, without changing anything**
+- [x] **Task 4.1 — Determine what a restore would change, without changing anything**
   - **Acceptance Criteria**
     - Given a safety-approved archive, a target, and a selected mode, requesting a preview produces a description of what would be added and/or overwritten (merge) or the complete resulting contents (replace), and results in zero changes to the target directory.
 - [ ] **Task 4.2 — Guarantee the preview matches what execution would do**

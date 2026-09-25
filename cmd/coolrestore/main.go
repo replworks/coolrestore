@@ -57,9 +57,9 @@ func run(args []string) error {
 		return err
 	}
 
-	_, runErr := restore.Run(invocation.Confirm,
+	plan, _, runErr := restore.Run(invocation.Confirm,
 		func() (restore.Plan, error) {
-			return restore.Plan{}, nil
+			return restore.PlanRestore(staging.Dir, invocation.Target, restore.Mode(invocation.Mode))
 		},
 		func(restore.Plan) error {
 			return fmt.Errorf("restore application is not implemented yet")
@@ -77,5 +77,27 @@ func run(args []string) error {
 	if stagingCleanupErr != nil {
 		return stagingCleanupErr
 	}
+	if !invocation.Confirm {
+		printPlan(plan)
+	}
 	return releaseErr
+}
+
+func printPlan(plan restore.Plan) {
+	fmt.Printf("plan-only restore (mode=%s, regular files=%d)\n", plan.Mode, plan.RegularFiles)
+	switch plan.Mode {
+	case restore.ModeMerge:
+		printPaths("added", plan.Added)
+		printPaths("overwritten", plan.Overwritten)
+	case restore.ModeReplace:
+		printPaths("result", plan.ResultPaths)
+		printPaths("removed", plan.Removed)
+	}
+}
+
+func printPaths(label string, paths []string) {
+	fmt.Printf("%s:\n", label)
+	for _, path := range paths {
+		fmt.Printf("  %s\n", path)
+	}
 }

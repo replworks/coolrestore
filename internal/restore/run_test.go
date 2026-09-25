@@ -6,7 +6,7 @@ func TestRunDefaultsToPlanOnlyAndDoesNotApply(t *testing.T) {
 	planned := false
 	applied := false
 
-	outcome, err := Run(false,
+	plan, outcome, err := Run(false,
 		func() (Plan, error) {
 			planned = true
 			return Plan{}, nil
@@ -18,6 +18,9 @@ func TestRunDefaultsToPlanOnlyAndDoesNotApply(t *testing.T) {
 	)
 	if err != nil {
 		t.Fatalf("Run() error = %v", err)
+	}
+	if plan.Mode != "" {
+		t.Fatalf("unauthorized plan = %#v, want empty test plan", plan)
 	}
 	if outcome != OutcomePlanOnly {
 		t.Fatalf("Run() outcome = %v, want plan-only", outcome)
@@ -34,7 +37,7 @@ func TestRunAppliesOnlyAfterAuthorizedPlanning(t *testing.T) {
 	planned := false
 	applied := false
 
-	outcome, err := Run(true,
+	plan, outcome, err := Run(true,
 		func() (Plan, error) {
 			planned = true
 			return Plan{}, nil
@@ -49,6 +52,9 @@ func TestRunAppliesOnlyAfterAuthorizedPlanning(t *testing.T) {
 	)
 	if err != nil {
 		t.Fatalf("Run() error = %v", err)
+	}
+	if plan.Mode != "" {
+		t.Fatalf("authorized plan = %#v, want empty test plan", plan)
 	}
 	if outcome != OutcomeApplied || !applied {
 		t.Fatalf("Run() outcome = %v, applied = %v", outcome, applied)

@@ -2,10 +2,25 @@
 // application.
 package restore
 
-// Plan is the single value that will flow from Restore Planner to Change
-// Application. Its contents are introduced by the planning task; the
-// authorization gate does not inspect or recompute it.
-type Plan struct{}
+// Mode identifies the target mutation strategy represented by a plan.
+type Mode string
+
+const (
+	ModeMerge   Mode = "merge"
+	ModeReplace Mode = "replace"
+)
+
+// Plan is the single value that flows from Restore Planner to Change
+// Application. Paths are relative to the target and use slash separators so
+// the plan is stable across operating systems.
+type Plan struct {
+	Mode         Mode
+	Added        []string
+	Overwritten  []string
+	Removed      []string
+	ResultPaths  []string
+	RegularFiles int
+}
 
 // Outcome identifies how a valid invocation ended at this stage.
 type Outcome uint8
@@ -18,16 +33,16 @@ const (
 // Run always completes planning first. Authorization is checked only after
 // planning, and an unauthorized invocation never calls apply. The callbacks
 // deliberately do not receive authorization as a planner input.
-func Run(authorized bool, plan func() (Plan, error), apply func(Plan) error) (Outcome, error) {
+func Run(authorized bool, plan func() (Plan, error), apply func(Plan) error) (Plan, Outcome, error) {
 	computedPlan, err := plan()
 	if err != nil {
-		return OutcomePlanOnly, err
+		return Plan{}, OutcomePlanOnly, err
 	}
 	if !authorized {
-		return OutcomePlanOnly, nil
+		return computedPlan, OutcomePlanOnly, nil
 	}
 	if err := apply(computedPlan); err != nil {
-		return OutcomeApplied, err
+		return computedPlan, OutcomeApplied, err
 	}
-	return OutcomeApplied, nil
+	return computedPlan, OutcomeApplied, nil
 }
