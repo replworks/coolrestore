@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-environment_file="${COOLRESTORE_ENV_FILE:-/etc/coolrestore/rustfs.env}"
+environment_file="${COOLRESTORE_ENV_FILE:-/etc/coolrestore/env}"
 if [[ ! -r "$environment_file" ]]; then
   echo "coolrestore credential environment file is not readable: $environment_file" >&2
-  echo "copy examples/coolrestore-rustfs.env.example to a protected environment file and set COOLRESTORE_ENV_FILE if needed" >&2
+  echo "copy examples/coolrestore.env.example to a protected environment file and set COOLRESTORE_ENV_FILE if needed" >&2
   exit 1
 fi
 

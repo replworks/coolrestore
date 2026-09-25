@@ -343,8 +343,8 @@ examples live under:
 
 ```text
 examples/
-    coolrestore-rustfs.env.example
-    coolrestore-rustfs-wrapper.sh
+    coolrestore.env.example
+    coolrestore-wrapper.sh
 ```
 
 Examples must contain placeholders only and must never contain real

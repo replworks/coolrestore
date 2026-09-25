@@ -72,11 +72,11 @@ coolrestore does not create or require a persistent configuration file.
 For repeated restores, use the wrapper examples in [`examples/`](./examples/) with a protected environment file instead of manually exporting credentials for each command:
 
 ```bash
-install -m 600 examples/coolrestore-rustfs.env.example /etc/coolrestore/rustfs.env
-export COOLRESTORE_ENV_FILE=/etc/coolrestore/rustfs.env
+install -m 600 examples/coolrestore.env.example /etc/coolrestore/env
+export COOLRESTORE_ENV_FILE=/etc/coolrestore/env
 ```
 
-Replace the placeholder values before use. The release also includes the examples as `coolrestore-examples.tar.gz` for operators who only download the binary.
+Replace the placeholder values before use. The release also includes the examples as `coolrestore-examples.tar.gz` for operators who only download the binary. For a user-specific setup, use `~/.config/coolrestore/env` instead.
 
 ---
 
@@ -222,7 +222,7 @@ Verify:
 - `AWS_S3_FORCE_PATH_STYLE=true` when required by the endpoint
 - bucket and object-key permissions
 
-If credentials cannot be loaded, coolrestore prints a short wrapper hint. It never prints credential values.
+If credentials cannot be loaded, coolrestore prints a short wrapper hint. It never prints credential values. The default system-wide environment file is `/etc/coolrestore/env`; `COOLRESTORE_ENV_FILE` can point to another protected file.
 
 ### Replace mode was rejected
 

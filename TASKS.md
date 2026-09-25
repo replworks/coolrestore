@@ -122,7 +122,7 @@ are complete.
     - Given missing S3 credentials, the failure report includes a concise
       wrapper hint without displaying credential values.
     - Repository examples contain placeholders only and document the
-      environment-variable wrapper pattern for repeated RustFS restores.
+      environment-variable wrapper pattern for repeated S3-compatible restores.
     - Release distribution makes the same wrapper guidance available to
       operators who obtain the binary without cloning the repository.
 
