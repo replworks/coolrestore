@@ -336,6 +336,23 @@ AWS_S3_FORCE_PATH_STYLE
 If none of the above are set, fall back to the AWS SDK's default
 credential provider chain.
 
+The tool must not accept credential values through CLI flags or positional
+arguments. Operators may use a protected external environment file and a
+wrapper script to provide these variables for repeated restores. Repository
+examples live under:
+
+```text
+examples/
+    coolrestore-rustfs.env.example
+    coolrestore-rustfs-wrapper.sh
+```
+
+Examples must contain placeholders only and must never contain real
+credentials. When the credential provider chain cannot load credentials, the
+failure report must include a concise wrapper hint without displaying any
+credential value. Release distribution must make the same wrapper pattern
+available to operators who obtain only the binary.
+
 ---
 
 ## Security Rules
