@@ -83,13 +83,13 @@ func extractTarGz(archivePath, stagingDir string) error {
 	if err != nil {
 		return fmt.Errorf("opening archive for staging: %w", err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	gzipReader, err := gzip.NewReader(file)
 	if err != nil {
 		return fmt.Errorf("opening archive gzip stream for staging: %w", err)
 	}
-	defer gzipReader.Close()
+	defer func() { _ = gzipReader.Close() }()
 	tarReader := tar.NewReader(gzipReader)
 
 	for {
@@ -110,7 +110,7 @@ func extractTarGz(archivePath, stagingDir string) error {
 			if err := os.MkdirAll(targetPath, 0o700); err != nil {
 				return fmt.Errorf("creating staged directory %q: %w", header.Name, err)
 			}
-		case tar.TypeReg, tar.TypeRegA:
+		case tar.TypeReg:
 			if err := os.MkdirAll(filepath.Dir(targetPath), 0o700); err != nil {
 				return fmt.Errorf("creating staged parent for %q: %w", header.Name, err)
 			}

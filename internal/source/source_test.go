@@ -39,7 +39,7 @@ func TestAcquireS3DownloadsThroughClient(t *testing.T) {
 	if err != nil {
 		t.Fatalf("acquireS3() error = %v", err)
 	}
-	defer artifact.Cleanup()
+	defer func() { _ = artifact.Cleanup() }()
 
 	contents, err := os.ReadFile(artifact.Path)
 	if err != nil {
@@ -93,7 +93,7 @@ func TestAcquireS3SkipChecksumAllowsSizeMismatch(t *testing.T) {
 	if err != nil {
 		t.Fatalf("acquireS3() error = %v", err)
 	}
-	defer artifact.Cleanup()
+	defer func() { _ = artifact.Cleanup() }()
 }
 
 func TestVerifySizeRejectsTruncatedReader(t *testing.T) {

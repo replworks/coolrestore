@@ -68,13 +68,13 @@ func regularFileBytes(path string) (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	gzipReader, err := gzip.NewReader(file)
 	if err != nil {
 		return 0, fmt.Errorf("invalid gzip stream: %w", err)
 	}
-	defer gzipReader.Close()
+	defer func() { _ = gzipReader.Close() }()
 
 	tarReader := tar.NewReader(gzipReader)
 	var total uint64
@@ -86,7 +86,7 @@ func regularFileBytes(path string) (uint64, error) {
 		if err != nil {
 			return 0, fmt.Errorf("invalid tar stream: %w", err)
 		}
-		if header.Typeflag != tar.TypeReg && header.Typeflag != tar.TypeRegA {
+		if header.Typeflag != tar.TypeReg {
 			continue
 		}
 		if header.Size < 0 {

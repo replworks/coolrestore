@@ -42,13 +42,13 @@ func ValidateTarGzSafety(path string) error {
 	if err != nil {
 		return fmt.Errorf("opening archive for safety validation: %w", err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	gzipReader, err := gzip.NewReader(file)
 	if err != nil {
 		return fmt.Errorf("opening archive gzip stream for safety validation: %w", err)
 	}
-	defer gzipReader.Close()
+	defer func() { _ = gzipReader.Close() }()
 	tarReader := tar.NewReader(gzipReader)
 	violations := make([]SafetyViolation, 0)
 
@@ -90,7 +90,7 @@ func validateHeader(header tar.Header) []SafetyViolation {
 	}
 
 	switch header.Typeflag {
-	case tar.TypeReg, tar.TypeRegA, tar.TypeDir:
+	case tar.TypeReg, tar.TypeDir:
 	case tar.TypeSymlink:
 		reason := "symbolic links are not allowed"
 		if symlinkEscapes(header.Name, header.Linkname) {

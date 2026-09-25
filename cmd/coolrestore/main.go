@@ -105,7 +105,7 @@ func run(args []string) error {
 }
 
 func printPlan(w io.Writer, invocation cli.Invocation, plan restore.Plan) {
-	fmt.Fprintf(w, "source: %s\ntarget: %s\nmode: %s\noutcome: planned\nregular_files: %d\n", invocation.Source, invocation.Target, plan.Mode, plan.RegularFiles)
+	_, _ = fmt.Fprintf(w, "source: %s\ntarget: %s\nmode: %s\noutcome: planned\nregular_files: %d\n", invocation.Source, invocation.Target, plan.Mode, plan.RegularFiles)
 	switch plan.Mode {
 	case restore.ModeMerge:
 		printPaths(w, "added", plan.Added)
@@ -117,17 +117,17 @@ func printPlan(w io.Writer, invocation cli.Invocation, plan restore.Plan) {
 }
 
 func printResult(w io.Writer, invocation cli.Invocation, plan restore.Plan) {
-	fmt.Fprintf(w, "source: %s\ntarget: %s\nmode: %s\noutcome: restored\nregular_files: %d\n", invocation.Source, invocation.Target, plan.Mode, plan.RegularFiles)
+	_, _ = fmt.Fprintf(w, "source: %s\ntarget: %s\nmode: %s\noutcome: restored\nregular_files: %d\n", invocation.Source, invocation.Target, plan.Mode, plan.RegularFiles)
 }
 
 func printPaths(w io.Writer, label string, paths []string) {
-	fmt.Fprintf(w, "%s:\n", label)
+	_, _ = fmt.Fprintf(w, "%s:\n", label)
 	for _, path := range paths {
-		fmt.Fprintf(w, "  %s\n", path)
+		_, _ = fmt.Fprintf(w, "  %s\n", path)
 	}
 }
 
 func reportFailure(invocation cli.Invocation, step, targetState string, err error) error {
-	fmt.Fprintf(os.Stderr, "source: %s\ntarget: %s\nmode: %s\noutcome: failed\nstep: %s\ntarget_state: %s\nerror: %v\n", invocation.Source, invocation.Target, invocation.Mode, step, targetState, err)
+	_, _ = fmt.Fprintf(os.Stderr, "source: %s\ntarget: %s\nmode: %s\noutcome: failed\nstep: %s\ntarget_state: %s\nerror: %v\n", invocation.Source, invocation.Target, invocation.Mode, step, targetState, err)
 	return err
 }
