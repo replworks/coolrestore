@@ -40,7 +40,7 @@ are complete.
   - **Acceptance Criteria**
     - Given an archive that was only partially retrieved, the operation fails before the archive's contents are examined further, and the target directory is unaffected.
     - Given a file that is not a valid compressed archive, the operation fails with a report identifying that the archive itself is invalid, and the target directory is unaffected.
-- [ ] **Task 2.3 — Confirm sufficient space before proceeding**
+- [x] **Task 2.3 — Confirm sufficient space before proceeding**
   - **Acceptance Criteria**
     - Given a case where the available space at the working location is insufficient for the archive's contents, the operation fails before any extraction occurs, and the target directory is unaffected.
     - Given sufficient available space, the operation proceeds past this stage.

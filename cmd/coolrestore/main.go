@@ -40,6 +40,11 @@ func run(args []string) error {
 		_ = targetLock.Release()
 		return err
 	}
+	if _, err := archive.CheckCapacity(artifact.Path, invocation.Staging, archive.OSSpaceChecker{}); err != nil {
+		_ = artifact.CleanupIfNeeded()
+		_ = targetLock.Release()
+		return err
+	}
 
 	_, runErr := restore.Run(invocation.Confirm,
 		func() (restore.Plan, error) {
