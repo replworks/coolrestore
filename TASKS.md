@@ -6,6 +6,10 @@ This document defines what remains to be implemented. It is an execution checkli
 
 A phase is complete only when every task in it satisfies its acceptance criteria.
 
+Execute exactly one task at a time, in document order. Do not begin a later
+task until the current task's implementation, tests, and acceptance criteria
+are complete.
+
 ---
 
 ### Phase 1 — Invocation Safety Baseline
@@ -79,7 +83,7 @@ A phase is complete only when every task in it satisfies its acceptance criteria
     - Given authorization and replace mode, the target directory's contents after the operation are exactly the archive's contents — nothing more, nothing less.
 - [ ] **Task 5.3 — Preserve the target when execution is interrupted**
   - **Acceptance Criteria**
-    - Given a forced interruption at any point after the archive has been acquired and before the restore completes, the target directory afterward is either fully unchanged from its pre-operation state or fully restored to it — never left in a mixed or partial state.
+    - Given a forced interruption at any point after the archive has been acquired and before the restore completes, the target directory afterward is either fully unchanged from its pre-operation state or fully restored to it through the defined atomic rename rollback mechanism — never left in a mixed or partial state.
 
 ---
 

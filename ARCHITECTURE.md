@@ -45,9 +45,9 @@ a target directory into either a plan (no change) or an applied restore
 - **Exclusive Target Access**: Only one invocation may be active against a
   given target directory at a time, whether that invocation will end in a
   plan or an applied change.
-- **Preserve on Failure**: If an attempt fails before or during
-  application, the target directory must end up unchanged, or restored,
-  to the greatest extent the failure allows.
+- **Preserve on Failure**: If an attempt fails before application, the
+  target directory remains unchanged. If a replace application fails,
+  the prior target directory entry is restored by atomic rename rollback.
 
 ---
 
@@ -88,6 +88,11 @@ reached.
 ---
 
 ## Components
+
+The components below are logical responsibility boundaries. The framework
+may group adjacent pre-application components into one implementation
+package, but grouping must not transfer responsibility across the stated
+boundaries.
 
 ### 1. Invocation Validator
 
@@ -236,6 +241,11 @@ reached.
   the only component permitted to write to the target directory, and it
   may only do so when both a change plan and an authorization signal are
   present. It has no authority to deviate from the plan it was given.
+- In replace mode, Change Application must use an atomic rename sequence:
+  move the existing target to a temporary backup name, move the staged
+  result into the target name, and restore the backup name if the second
+  rename or subsequent finalization fails. This sequence is valid only
+  when target and staging are on the same filesystem.
 - **Result Reporter** owns communication of outcomes only. It has no
   authority to alter, retry, or reinterpret the outcome it is given.
 - Authorization is a single boolean fact carried by the invocation from
@@ -309,10 +319,10 @@ It does not consume raw archive or target directory data directly.
 - **Unauthorized invocation reaching the end of Restore Planning**: this is
   not a failure; it is reported as a plan; Change Application is never
   reached.
-- **Change Application failure (partway through mutation)**: the target
-  directory must be restored to its pre-application state to the greatest
-  extent possible; cleanup and lock release occur only after this recovery
-  is complete.
+- **Change Application failure (partway through mutation)**: in replace
+  mode, the atomic rename rollback must restore the prior target directory
+  entry before cleanup and lock release. Replace must be rejected before
+  mutation if the same-filesystem precondition is not met.
 
 ---
 
@@ -358,6 +368,12 @@ target at any time.
 ```text
 Any failure prior to Change Application leaves the target directory
 exactly as it was found.
+```
+
+```text
+Replace-mode application either completes through the atomic rename
+sequence or restores the prior target directory entry before reporting
+failure.
 ```
 
 ```text
