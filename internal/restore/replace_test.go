@@ -55,6 +55,44 @@ func TestApplyReplaceRejectsNonReplacePlan(t *testing.T) {
 	}
 }
 
+func TestApplyReplaceRollsBackWhenInterruptedAfterMovingTarget(t *testing.T) {
+	root := t.TempDir()
+	staging := filepath.Join(root, "staging")
+	target := filepath.Join(root, "target")
+	writeReplaceFile(t, filepath.Join(staging, "new.txt"), "new")
+	writeReplaceFile(t, filepath.Join(target, "old.txt"), "old")
+
+	err := applyReplace(staging, target, Plan{Mode: ModeReplace}, replaceFailureAfterTargetMove)
+	if err == nil {
+		t.Fatal("applyReplace() unexpectedly succeeded")
+	}
+	if got := readReplaceFile(t, filepath.Join(target, "old.txt")); got != "old" {
+		t.Fatalf("target after rollback = %q", got)
+	}
+	if _, err := os.Lstat(filepath.Join(target, "new.txt")); !os.IsNotExist(err) {
+		t.Fatalf("new target content survived rollback: %v", err)
+	}
+}
+
+func TestApplyReplaceRollsBackWhenInterruptedAfterInstallingStaging(t *testing.T) {
+	root := t.TempDir()
+	staging := filepath.Join(root, "staging")
+	target := filepath.Join(root, "target")
+	writeReplaceFile(t, filepath.Join(staging, "new.txt"), "new")
+	writeReplaceFile(t, filepath.Join(target, "old.txt"), "old")
+
+	err := applyReplace(staging, target, Plan{Mode: ModeReplace}, replaceFailureAfterStagingMove)
+	if err == nil {
+		t.Fatal("applyReplace() unexpectedly succeeded")
+	}
+	if got := readReplaceFile(t, filepath.Join(target, "old.txt")); got != "old" {
+		t.Fatalf("target after rollback = %q", got)
+	}
+	if _, err := os.Lstat(filepath.Join(target, "new.txt")); !os.IsNotExist(err) {
+		t.Fatalf("new target content survived rollback: %v", err)
+	}
+}
+
 func writeReplaceFile(t *testing.T, path, contents string) {
 	t.Helper()
 	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {

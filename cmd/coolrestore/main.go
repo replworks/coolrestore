@@ -57,7 +57,7 @@ func run(args []string) error {
 		return err
 	}
 
-	plan, _, runErr := restore.Run(invocation.Confirm,
+	plan, outcome, runErr := restore.Run(invocation.Confirm,
 		func() (restore.Plan, error) {
 			return restore.PlanRestore(staging.Dir, invocation.Target, restore.Mode(invocation.Mode))
 		},
@@ -72,6 +72,12 @@ func run(args []string) error {
 	cleanupErr := artifact.CleanupIfNeeded()
 	releaseErr := targetLock.Release()
 	if runErr != nil {
+		if outcome == restore.OutcomeApplied {
+			if restore.Mode(invocation.Mode) == restore.ModeReplace {
+				return fmt.Errorf("change application failed; target was restored by atomic rollback: %w", runErr)
+			}
+			return fmt.Errorf("change application failed; target may contain partial changes: %w", runErr)
+		}
 		return runErr
 	}
 	if cleanupErr != nil {

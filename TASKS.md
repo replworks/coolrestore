@@ -81,7 +81,7 @@ are complete.
 - [x] **Task 5.2 — Perform a replace restore**
   - **Acceptance Criteria**
     - Given authorization and replace mode, the target directory's contents after the operation are exactly the archive's contents — nothing more, nothing less.
-- [ ] **Task 5.3 — Recover safely when execution is interrupted**
+- [x] **Task 5.3 — Recover safely when execution is interrupted**
   - **Acceptance Criteria**
     - Given a forced interruption during a replace-mode restore, the
       atomic rename rollback restores the prior target directory entry
