@@ -45,6 +45,12 @@ func run(args []string) error {
 		_ = targetLock.Release()
 		return err
 	}
+	staging, err := archive.StageTarGz(artifact.Path, invocation.Target, invocation.Staging)
+	if err != nil {
+		_ = artifact.CleanupIfNeeded()
+		_ = targetLock.Release()
+		return err
+	}
 
 	_, runErr := restore.Run(invocation.Confirm,
 		func() (restore.Plan, error) {
@@ -54,6 +60,7 @@ func run(args []string) error {
 			return fmt.Errorf("restore application is not implemented yet")
 		},
 	)
+	stagingCleanupErr := staging.Cleanup()
 	cleanupErr := artifact.CleanupIfNeeded()
 	releaseErr := targetLock.Release()
 	if runErr != nil {
@@ -61,6 +68,9 @@ func run(args []string) error {
 	}
 	if cleanupErr != nil {
 		return cleanupErr
+	}
+	if stagingCleanupErr != nil {
+		return stagingCleanupErr
 	}
 	return releaseErr
 }

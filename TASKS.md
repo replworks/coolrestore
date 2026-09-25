@@ -49,7 +49,7 @@ are complete.
 
 ### Phase 3 — Archive Content Safety
 
-- [ ] **Task 3.1 — Keep archive extraction isolated from the restore target**
+- [x] **Task 3.1 — Keep archive extraction isolated from the restore target**
   - **Acceptance Criteria**
     - At no point during extraction does any archive content appear under the target directory; this holds even when the operation ultimately fails during or after extraction.
 - [ ] **Task 3.2 — Reject archives containing unsafe content**
