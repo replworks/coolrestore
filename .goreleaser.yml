@@ -20,6 +20,9 @@ builds:
 
 archives:
   - formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
     name_template: >-
       {{ .ProjectName }}_
       {{- .Version }}_
@@ -35,8 +38,11 @@ homebrew_casks:
       name: homebrew-tap
 
     homepage: "https://github.com/replworks/{{ .ProjectName }}"
-
     description: "Safely restore Coolify storage backups from S3-compatible storage after an incident"
+    hooks:
+      post:
+        install: |
+          system_command "xattr", args: ["-d", "com.apple.quarantine", "#{staged_path}/coolrestore"]
 
 checksum:
   name_template: "checksums.txt"
@@ -52,5 +58,8 @@ changelog:
       - "^test:"
 
 release:
+  github:
+    owner: replworks
+    name: "{{ .ProjectName }}"
   draft: true
   prerelease: auto
