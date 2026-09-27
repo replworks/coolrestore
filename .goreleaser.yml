@@ -65,6 +65,6 @@ changelog:
 release:
   github:
     owner: replworks
-    name: "{{ .ProjectName }}"
+    name: coolrestore
   draft: false
   prerelease: auto
