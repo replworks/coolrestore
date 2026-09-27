@@ -4,8 +4,8 @@
 [![release](https://github.com/replworks/coolrestore/actions/workflows/release.yml/badge.svg)](https://github.com/replworks/coolrestore/actions/workflows/release.yml)
 [![update-changelog](https://github.com/replworks/coolrestore/actions/workflows/update-changelog.yml/badge.svg)](https://github.com/replworks/coolrestore/actions/workflows/update-changelog.yml)
 [![Go Reference](https://pkg.go.dev/badge/github.com/replworks/coolrestore.svg)](https://pkg.go.dev/github.com/replworks/coolrestore)
-[![Go Report Card](https://goreportcard.com/badge/github.com/replworks/coolrestore)](https://goreportcard.com/report/github.com/replworks/coolrestore)
 [![Go Version](https://img.shields.io/github/go-mod/go-version/replworks/coolrestore)](https://github.com/replworks/coolrestore)
+![License](https://img.shields.io/github/license/replworks/coolrestore)
 
 > Restore Coolify storage safely after an incident.
 >

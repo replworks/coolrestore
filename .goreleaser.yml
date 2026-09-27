@@ -42,12 +42,12 @@ homebrew_casks:
 
     homepage: "https://github.com/replworks/{{ .ProjectName }}"
     description: "Safely restore Coolify storage backups from S3-compatible storage after an incident"
-    hooks:
-      post:
-        install: |
-          if OS.mac?
-            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/coolrestore"]
-          end
+    custom_block: |
+      on_macos do
+        postflight_steps do
+          run "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "{{ "{{" }}staged_path{{ "}}" }}/coolrestore"]
+        end
+      end
 
 checksum:
   name_template: "checksums.txt"
