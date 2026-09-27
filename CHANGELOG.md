@@ -1,5 +1,15 @@
 # Release Notes
 
+## v0.1.1 - 2026-09-27
+
+### What's Changed
+
+* fix: update release workflow by [@cable8mm](https://github.com/cable8mm) in https://github.com/replworks/coolrestore/pull/13
+* feat: add workflow dispatch input for tag in release workflow by [@cable8mm](https://github.com/cable8mm) in https://github.com/replworks/coolrestore/pull/14
+* fix: update GitHub repository name in release configuration by [@cable8mm](https://github.com/cable8mm) in https://github.com/replworks/coolrestore/pull/15
+
+**Full Changelog**: https://github.com/replworks/coolrestore/compare/v0.1.0...v0.1.1
+
 ## v0.1.0 - 2026-09-27
 
 ### What's Changed
