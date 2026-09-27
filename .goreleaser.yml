@@ -1,5 +1,7 @@
 version: 2
 
+project_name: coolrestore
+
 builds:
   - main: ./cmd/coolrestore
     env:
@@ -36,13 +38,16 @@ homebrew_casks:
   - repository:
       owner: replworks
       name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
 
     homepage: "https://github.com/replworks/{{ .ProjectName }}"
     description: "Safely restore Coolify storage backups from S3-compatible storage after an incident"
     hooks:
       post:
         install: |
-          system_command "xattr", args: ["-d", "com.apple.quarantine", "#{staged_path}/coolrestore"]
+          if OS.mac?
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/coolrestore"]
+          end
 
 checksum:
   name_template: "checksums.txt"
@@ -61,5 +66,5 @@ release:
   github:
     owner: replworks
     name: "{{ .ProjectName }}"
-  draft: true
+  draft: false
   prerelease: auto

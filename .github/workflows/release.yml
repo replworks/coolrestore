@@ -19,7 +19,7 @@ jobs:
 
       - uses: actions/setup-go@v7
         with:
-          go-version: stable
+          go-version-file: go.mod
 
       - name: Check formatting
         run: test -z "$(gofmt -l $(find . -name '*.go' -not -path './docs/*'))"
