@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/replworks/coolrestore/actions/workflows/ci.yml/badge.svg)](https://github.com/replworks/coolrestore/actions/workflows/ci.yml)
 [![release](https://github.com/replworks/coolrestore/actions/workflows/release.yml/badge.svg)](https://github.com/replworks/coolrestore/actions/workflows/release.yml)
+[![update-changelog](https://github.com/replworks/coolrestore/actions/workflows/update-changelog.yml/badge.svg)](https://github.com/replworks/coolrestore/actions/workflows/update-changelog.yml)
 [![Go Reference](https://pkg.go.dev/badge/github.com/replworks/coolrestore.svg)](https://pkg.go.dev/github.com/replworks/coolrestore)
 [![Go Report Card](https://goreportcard.com/badge/github.com/replworks/coolrestore)](https://goreportcard.com/report/github.com/replworks/coolrestore)
 [![Go Version](https://img.shields.io/github/go-mod/go-version/replworks/coolrestore)](https://github.com/replworks/coolrestore)
@@ -60,6 +61,11 @@ brew upgrade --cask coolrestore
 
 The cask provides prebuilt binaries for macOS and Linux on `amd64` and
 `arm64`. Homebrew downloads the binaries from the published GitHub Release.
+The current macOS binary is not signed or notarized by Apple, so the cask uses
+a macOS-only post-install hook to remove the download quarantine attribute.
+This is a distribution workaround, not a replacement for code signing and
+notarization; future releases should move to Apple Developer ID signing and
+notarization and then remove the hook.
 
 ### Go
 
