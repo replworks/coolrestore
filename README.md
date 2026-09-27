@@ -40,7 +40,26 @@ Verify the binary:
 file /usr/local/bin/coolrestore
 ```
 
-Release binaries are statically built for Linux `amd64` and `arm64`.
+Release binaries are statically built for Linux and macOS on `amd64` and
+`arm64`; Windows archives are also published.
+
+### Homebrew Cask
+
+Install the published cask from the Replworks tap:
+
+```bash
+brew tap replworks/tap
+brew install --cask coolrestore
+```
+
+Upgrade it later with:
+
+```bash
+brew upgrade --cask coolrestore
+```
+
+The cask provides prebuilt binaries for macOS and Linux on `amd64` and
+`arm64`. Homebrew downloads the binaries from the published GitHub Release.
 
 ### Go
 
