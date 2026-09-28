@@ -1,5 +1,14 @@
 # Release Notes
 
+## v0.1.2 - 2026-09-28
+
+### What's Changed
+
+* fix: update homebrew cask post-install hooks by [@cable8mm](https://github.com/cable8mm) in https://github.com/replworks/coolrestore/pull/16
+* feat: add apt repo notification and update nfpms configuration by [@cable8mm](https://github.com/cable8mm) in https://github.com/replworks/coolrestore/pull/17
+
+**Full Changelog**: https://github.com/replworks/coolrestore/compare/v0.1.1...v0.1.2
+
 ## v0.1.1 - 2026-09-27
 
 ### What's Changed
