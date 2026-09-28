@@ -49,6 +49,14 @@ homebrew_casks:
         end
       end
 
+nfpms:
+  - package_name: coolrestore
+    homepage: "https://github.com/replworks/coolrestore"
+    maintainer: "cable8mm <cable8mm@gmail.com>"
+    description: "Safely restore Coolify storage backups from S3-compatible storage after an incident"
+    license: MIT
+    formats: [deb]
+
 checksum:
   name_template: "checksums.txt"
 
