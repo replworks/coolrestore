@@ -2,12 +2,21 @@ package main
 
 import (
 	"archive/tar"
+	"bytes"
 	"compress/gzip"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 )
+
+func TestPrintVersion(t *testing.T) {
+	var output bytes.Buffer
+	printVersion(&output)
+	if output.String() != "coolrestore "+version+"\n" {
+		t.Fatalf("version output = %q", output.String())
+	}
+}
 
 func TestRunSkipChecksumStillRejectsInvalidArchiveStructure(t *testing.T) {
 	base := t.TempDir()
