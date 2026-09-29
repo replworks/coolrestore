@@ -139,7 +139,7 @@ without downloading the archive body or requiring a target directory:
 ```bash
 coolrestore diagnose \
   --env-file ./coolrestore.env \
-  --source 's3://coolify-backups/storage/2026-09-26.tar.gz'
+  --source 's3://coolify-bucket/data/coolify/backups/volumes/replworks-team-0/wjpmbrff7txw1hqtwu4jb4xb/directory-datawifinotestorage-1790266116.tar.gz'
 ```
 
 For a local archive, diagnosis checks that the path exists and is readable:
