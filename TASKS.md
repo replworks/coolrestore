@@ -155,7 +155,7 @@ are complete.
     - Version reporting does not require source, target, credentials, or
       network access.
 
-- [ ] **Task 7.6 — Discover and select S3 backup archives**
+- [x] **Task 7.6 — Discover and select S3 backup archives**
   - **Acceptance Criteria**
     - Given an S3 prefix, `coolrestore list` reports matching `.tar.gz`
       objects with their exact keys, last-modified timestamps, and sizes
