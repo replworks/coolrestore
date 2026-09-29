@@ -17,7 +17,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
-const credentialWrapperHint = "hint: use --env-file with a protected environment file or a protected environment wrapper; see the release examples bundle"
+const credentialWrapperHint = "hint: use --env-file with a protected environment file"
 
 // Artifact is an archive made available to later restore stages. Local
 // artifacts point at the supplied file; remote artifacts point at a temporary

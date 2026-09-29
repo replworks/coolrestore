@@ -224,7 +224,7 @@ boundaries.
     applied result, or a failure) into the reports and exit status defined
     in PRODUCT_SPEC.md. Responsible for never altering the substance of
     what it reports. For credential-loading failures, it may add the fixed,
-    non-sensitive wrapper hint defined by the product specification, but it
+    non-sensitive `--env-file` hint defined by the product specification, but it
     must never print credential values.
 
 ---
@@ -257,7 +257,7 @@ boundaries.
   when target and staging are on the same filesystem.
 - **Result Reporter** owns communication of outcomes only. It has no
   authority to alter, retry, or reinterpret the outcome it is given. A
-  credential-loading failure may include the fixed wrapper hint, but no
+  credential-loading failure may include the fixed `--env-file` hint, but no
   credential value.
 - Authorization is a single boolean fact carried by the invocation from
   the Invocation Validator onward. Only the boundary between Restore

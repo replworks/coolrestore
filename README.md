@@ -125,14 +125,18 @@ The file uses simple `KEY=VALUE` entries. Blank lines and full-line comments
 are allowed; shell commands and `export` statements are not evaluated.
 `./coolrestore.env` is never auto-discovered.
 
-For repeated restores, use the wrapper examples in [`examples/`](./examples/) with a protected environment file instead of manually exporting credentials for each command:
+For repeated restores, keep `coolrestore.env` protected and pass it explicitly:
 
 ```bash
-install -m 600 examples/coolrestore.env.example /etc/coolrestore/env
-export COOLRESTORE_ENV_FILE=/etc/coolrestore/env
+install -m 600 ./coolrestore.env /etc/coolrestore/env
+coolrestore \
+  --env-file /etc/coolrestore/env \
+  --source 's3://bucket/object-key.tar.gz' \
+  --target /tmp/coolrestore-test
 ```
 
-Replace the placeholder values before use. The release also includes the examples as `coolrestore-examples.tar.gz` for operators who only download the binary. For a user-specific setup, use `~/.config/coolrestore/env` instead.
+For a user-specific setup, use `~/.config/coolrestore/env` and pass that path
+with `--env-file`.
 
 ---
 
@@ -296,7 +300,7 @@ Verify:
 - `AWS_S3_FORCE_PATH_STYLE=true` when required by the endpoint
 - bucket and object-key permissions
 
-If credentials cannot be loaded, coolrestore prints a short wrapper hint. It never prints credential values. The default system-wide environment file is `/etc/coolrestore/env`; `COOLRESTORE_ENV_FILE` can point to another protected file.
+If credentials cannot be loaded, coolrestore prints a short `--env-file` hint. It never prints credential values. Use a protected file such as `/etc/coolrestore/env` and pass it explicitly with `--env-file`.
 
 ### Replace mode was rejected
 

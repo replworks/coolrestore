@@ -372,21 +372,9 @@ credential provider chain.
 
 The tool must not accept credential values through CLI flags or positional
 arguments. Operators may use a protected external environment file selected
-with `--env-file`, or a wrapper script to provide these variables for repeated
-restores. Repository
-examples live under:
-
-```text
-examples/
-    coolrestore.env.example
-    coolrestore-wrapper.sh
-```
-
-Examples must contain placeholders only and must never contain real
-credentials. When the credential provider chain cannot load credentials, the
-failure report must include a concise wrapper hint without displaying any
-credential value. Release distribution must make the same wrapper pattern
-available to operators who obtain only the binary.
+with `--env-file` for repeated restores. When the credential provider chain
+cannot load credentials, the failure report must include a concise
+`--env-file` hint without displaying any credential value.
 
 ---
 
