@@ -11,6 +11,9 @@ overwritten can be brought back exactly as they existed in the backup.
 The product also provides a read-only `diagnose` command so an operator can
 verify source connectivity and access before attempting a restore.
 
+The product provides `--version` to report the installed binary version
+without accessing any source or target.
+
 ## Problem
 
 A storage backup archive exists in S3-compatible storage or as a local
@@ -160,6 +163,9 @@ cannot be trusted to be well-formed.
     credentials, and access to the specified bucket/object without downloading
     the object body. It must report a successful reachability result or a
     failure step without displaying credential values.
+20. When invoked as `coolrestore --version`, the product must print the
+    product name and build version, exit successfully, and access no local or
+    remote restore resource.
 
 ## User Flows
 

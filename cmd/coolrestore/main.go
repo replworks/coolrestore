@@ -19,6 +19,8 @@ const (
 	exitFailure = 1
 )
 
+var version = "dev"
+
 func main() {
 	if err := run(os.Args[1:]); err != nil {
 		fmt.Fprintln(os.Stderr, "coolrestore failed:", err)
@@ -28,10 +30,18 @@ func main() {
 }
 
 func run(args []string) error {
+	if len(args) == 1 && args[0] == "--version" {
+		printVersion(os.Stdout)
+		return nil
+	}
 	if len(args) > 0 && args[0] == "diagnose" {
 		return runDiagnose(args[1:])
 	}
 	return runRestore(args)
+}
+
+func printVersion(w io.Writer) {
+	_, _ = fmt.Fprintf(w, "coolrestore %s\n", version)
 }
 
 func runDiagnose(args []string) error {

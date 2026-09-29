@@ -150,6 +150,12 @@ are complete.
       regular file.
     - Diagnosis supports the same explicit `--env-file` behavior as restore
       and never prints credential values.
+- [x] **Task 7.5 — Report the installed binary version**
+  - **Acceptance Criteria**
+    - Given `coolrestore --version`, the binary prints its product name and
+      build version and exits successfully.
+    - Version reporting does not require source, target, credentials, or
+      network access.
 
 ---
 

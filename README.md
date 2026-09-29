@@ -75,6 +75,12 @@ For development or local builds:
 go install github.com/replworks/coolrestore/cmd/coolrestore@latest
 ```
 
+Verify the installed binary version:
+
+```bash
+coolrestore --version
+```
+
 ---
 
 ## Configuration
