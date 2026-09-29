@@ -35,9 +35,21 @@ func run(args []string) error {
 		return nil
 	}
 	if len(args) > 0 && args[0] == "diagnose" {
+		if len(args) == 2 && isHelpArgument(args[1]) {
+			cli.PrintDiagnoseUsage(os.Stdout)
+			return nil
+		}
 		return runDiagnose(args[1:])
 	}
+	if len(args) == 1 && isHelpArgument(args[0]) {
+		cli.PrintUsage(os.Stdout)
+		return nil
+	}
 	return runRestore(args)
+}
+
+func isHelpArgument(arg string) bool {
+	return arg == "help" || arg == "--help" || arg == "-h"
 }
 
 func printVersion(w io.Writer) {
