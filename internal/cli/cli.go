@@ -77,17 +77,17 @@ func ParseDiagnose(args []string) (DiagnoseInvocation, error) {
 func PrintUsage(w io.Writer) {
 	var invocation Invocation
 	flags := newRestoreFlagSet(w, &invocation)
-	fmt.Fprintln(w, "Usage: coolrestore [flags]")
+	_, _ = fmt.Fprintln(w, "Usage: coolrestore [flags]")
 	flags.PrintDefaults()
-	fmt.Fprintln(w, "       coolrestore diagnose --source SOURCE [--env-file PATH]")
-	fmt.Fprintln(w, "       coolrestore --version")
+	_, _ = fmt.Fprintln(w, "       coolrestore diagnose --source SOURCE [--env-file PATH]")
+	_, _ = fmt.Fprintln(w, "       coolrestore --version")
 }
 
 // PrintDiagnoseUsage writes the diagnose subcommand's usage and flags.
 func PrintDiagnoseUsage(w io.Writer) {
 	var invocation DiagnoseInvocation
 	flags := newDiagnoseFlagSet(w, &invocation)
-	fmt.Fprintln(w, "Usage: coolrestore diagnose --source SOURCE [--env-file PATH]")
+	_, _ = fmt.Fprintln(w, "Usage: coolrestore diagnose --source SOURCE [--env-file PATH]")
 	flags.PrintDefaults()
 }
 
