@@ -167,6 +167,24 @@ coolrestore diagnose \
   --source /backups/coolify-storage.tar.gz
 ```
 
+List available S3 backup archives below a prefix without downloading them:
+
+```bash
+coolrestore list \
+  --env-file ./coolrestore.env \
+  --source 's3://coolify-bucket/data/coolify/backups/volumes/replworks-team-0/wjpmbrff7txw1hqtwu4jb4xb/'
+```
+
+Select the newest `.tar.gz` archive below a prefix for a restore:
+
+```bash
+coolrestore \
+  --env-file ./coolrestore.env \
+  --source 's3://coolify-bucket/data/coolify/backups/volumes/replworks-team-0/wjpmbrff7txw1hqtwu4jb4xb/' \
+  --latest \
+  --target /var/lib/coolify/storage
+```
+
 Preview a local archive. Preview is the default and does not modify the target directory:
 
 ```bash

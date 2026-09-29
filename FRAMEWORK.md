@@ -188,7 +188,21 @@ The restore invocation uses these standard-library `flag` options:
 --staging         optional staging base directory
 --skip-checksum   optional; skip only the size-based integrity comparison
 --env-file        optional explicit dotenv-style S3 environment file
+--latest          optional select the newest .tar.gz object below an S3
+                  --source ending in /
 ```
+
+The read-only listing invocation is:
+
+```text
+coolrestore list --source s3://bucket/object-prefix/ [--env-file PATH]
+```
+
+The restore invocation may use `--source s3://bucket/object-prefix/ --latest`
+instead of an exact object source. An S3 source ending in `/` is a prefix;
+an exact object source does not end in `/`. Only `.tar.gz` objects are
+eligible, and selection uses S3 last-modified time with ascending object-key
+tie-breaking.
 
 The diagnostic invocation is a separate subcommand and uses:
 
