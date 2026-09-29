@@ -190,6 +190,17 @@ The restore invocation uses these standard-library `flag` options:
 --env-file        optional explicit dotenv-style S3 environment file
 ```
 
+The diagnostic invocation is a separate subcommand and uses:
+
+```text
+coolrestore diagnose --source SOURCE [--env-file PATH]
+```
+
+It must not accept or require `--target`, `--confirm`, `--mode`, or
+`--staging`. For an S3 source, diagnosis uses the same AWS SDK client
+configuration as restore and performs `HeadObject` for the specified bucket
+and key. It must not call `GetObject` or download the archive body.
+
 `--env-file` accepts a path relative to the current working directory or an
 absolute path. It is read only when explicitly supplied; `./coolrestore.env`
 is never auto-discovered. The file format is one supported environment
@@ -277,6 +288,8 @@ and ARCHITECTURE.md Architectural Invariants):
   the locally run RustFS server, exercising the same acquisition
   code path used in production. This satisfies AGENTS.md's EXTERNAL_BOUNDARY
   E2E requirement for the S3 source; it is required, not optional.
+- The live RustFS E2E test must also perform a real `HeadObject` diagnosis
+  against the uploaded object and verify its reported metadata.
 - S3 and local source acquisition (unit-level, against the fake/abstracted
   client), including a size mismatch (simulated truncated download) being
   rejected.

@@ -21,13 +21,39 @@ const (
 
 func main() {
 	if err := run(os.Args[1:]); err != nil {
-		fmt.Fprintln(os.Stderr, "restore failed:", err)
+		fmt.Fprintln(os.Stderr, "coolrestore failed:", err)
 		os.Exit(exitFailure)
 	}
 	os.Exit(exitSuccess)
 }
 
 func run(args []string) error {
+	if len(args) > 0 && args[0] == "diagnose" {
+		return runDiagnose(args[1:])
+	}
+	return runRestore(args)
+}
+
+func runDiagnose(args []string) error {
+	invocation, err := cli.ParseDiagnose(args)
+	if err != nil {
+		return err
+	}
+	if invocation.EnvFile != "" {
+		if err := config.LoadEnvFile(invocation.EnvFile); err != nil {
+			return reportDiagnosisFailure(invocation, "environment file", err)
+		}
+	}
+
+	diagnosis, err := source.Diagnose(context.Background(), invocation.Source)
+	if err != nil {
+		return reportDiagnosisFailure(invocation, "source access", err)
+	}
+	printDiagnosis(os.Stdout, diagnosis)
+	return nil
+}
+
+func runRestore(args []string) error {
 	invocation, err := cli.Parse(args)
 	if err != nil {
 		return err
@@ -108,6 +134,24 @@ func run(args []string) error {
 	}
 	printResult(os.Stdout, invocation, plan)
 	return nil
+}
+
+func printDiagnosis(w io.Writer, diagnosis source.Diagnosis) {
+	_, _ = fmt.Fprintf(w, "source: %s\n", diagnosis.Source)
+	if diagnosis.Bucket != "" {
+		endpoint := "AWS SDK default"
+		if os.Getenv("AWS_ENDPOINT_URL") != "" {
+			endpoint = "configured"
+		}
+		_, _ = fmt.Fprintf(w, "endpoint: %s\nbucket: %s\nobject: %s\nobject_size: %d\noutcome: reachable\n", endpoint, diagnosis.Bucket, diagnosis.Key, diagnosis.Size)
+		return
+	}
+	_, _ = fmt.Fprintf(w, "source_type: local\nsize: %d\noutcome: readable\n", diagnosis.Size)
+}
+
+func reportDiagnosisFailure(invocation cli.DiagnoseInvocation, step string, err error) error {
+	_, _ = fmt.Fprintf(os.Stderr, "source: %s\noutcome: failed\nstep: %s\nerror: %v\n", invocation.Source, step, err)
+	return err
 }
 
 func printPlan(w io.Writer, invocation cli.Invocation, plan restore.Plan) {
