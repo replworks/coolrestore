@@ -66,12 +66,38 @@ func TestParseDiagnoseAcceptsSourceAndEnvFileWithoutTarget(t *testing.T) {
 	}
 }
 
+func TestParseDiagnoseAcceptsLatestS3Prefix(t *testing.T) {
+	invocation, err := ParseDiagnose([]string{
+		"--source", "s3://backup-bucket/path/",
+		"--latest",
+	})
+	if err != nil {
+		t.Fatalf("ParseDiagnose() error = %v", err)
+	}
+	if invocation.Source != "s3://backup-bucket/path/" || !invocation.Latest {
+		t.Fatalf("unexpected invocation: %+v", invocation)
+	}
+}
+
 func TestParseDiagnoseRejectsRestoreOnlyFlags(t *testing.T) {
 	if _, err := ParseDiagnose([]string{
 		"--source", "/tmp/archive.tar.gz",
 		"--target", "/tmp/target",
 	}); err == nil {
 		t.Fatal("ParseDiagnose() unexpectedly accepted --target")
+	}
+}
+
+func TestParseDiagnoseRejectsInvalidLatestSources(t *testing.T) {
+	tests := [][]string{
+		{"--source", "s3://backup-bucket/path/"},
+		{"--source", "s3://backup-bucket/path/archive.tar.gz", "--latest"},
+		{"--source", "/tmp/archive.tar.gz", "--latest"},
+	}
+	for _, args := range tests {
+		if _, err := ParseDiagnose(args); err == nil {
+			t.Errorf("ParseDiagnose(%v) unexpectedly succeeded", args)
+		}
 	}
 }
 

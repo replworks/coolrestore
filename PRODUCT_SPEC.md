@@ -170,8 +170,10 @@ cannot be trusted to be well-formed.
     same local or S3 source forms as restore, and never require or access a
     restore target. For an S3 source it must verify client configuration,
     credentials, and access to the specified bucket/object without downloading
-    the object body. It must report a successful reachability result or a
-    failure step without displaying credential values.
+    the object body. When `--source` is an S3 prefix ending in `/` and
+    `--latest` is supplied, it must select the same newest matching object as
+    restore before performing `HeadObject`. It must report a successful
+    reachability result or a failure step without displaying credential values.
 20. When invoked as `coolrestore --version`, the product must print the
     product name and build version, exit successfully, and access no local or
     remote restore resource.
@@ -186,6 +188,8 @@ cannot be trusted to be well-formed.
 23. An S3 `--source` ending in `/` must require `--latest` for a restore, and
     `--latest` must require such a prefix source. A selected object's exact
     S3 URI must appear in the plan, result, or failure report.
+24. `diagnose` must accept the same `--latest` prefix selection as restore and
+    must report the selected exact S3 URI without downloading its body.
 
 ## User Flows
 
@@ -215,6 +219,15 @@ cannot be trusted to be well-formed.
    last-modified time, with object-key tie-breaking.
 3. Product continues the normal restore flow using the selected exact object
    URI and reports that URI.
+
+### Flow 0c — Diagnose the newest archive below an S3 prefix
+
+1. Operator specifies an S3 prefix, `--latest`, and any explicit S3
+   environment file.
+2. Product selects the newest matching `.tar.gz` object using the same rules
+   as restore.
+3. Product performs `HeadObject` on the selected exact object without
+   downloading its body and reports that object as reachable.
 
 ### Flow 1 — Preview a restore (default)
 

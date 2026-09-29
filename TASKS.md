@@ -166,6 +166,9 @@ are complete.
     - A prefix source without `--latest`, a non-prefix source with
       `--latest`, or a non-S3 prefix source fails before target locking or
       archive acquisition.
+    - Given an S3 prefix and `coolrestore diagnose --latest`, diagnosis
+      selects the same exact newest object as restore and performs metadata
+      access without downloading its body.
 
 ---
 

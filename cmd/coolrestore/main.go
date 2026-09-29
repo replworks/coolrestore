@@ -73,6 +73,13 @@ func runDiagnose(args []string) error {
 			return reportDiagnosisFailure(invocation, "environment file", err)
 		}
 	}
+	if invocation.Latest {
+		selectedSource, err := selectLatestSource(context.Background(), invocation.Source)
+		if err != nil {
+			return reportDiagnosisFailure(invocation, "source selection", err)
+		}
+		invocation.Source = selectedSource
+	}
 
 	diagnosis, err := source.Diagnose(context.Background(), invocation.Source)
 	if err != nil {
@@ -112,11 +119,11 @@ func runRestore(args []string) error {
 		}
 	}
 	if invocation.Latest {
-		objects, err := source.List(context.Background(), invocation.Source)
+		selectedSource, err := selectLatestSource(context.Background(), invocation.Source)
 		if err != nil {
 			return reportFailure(invocation, "source selection", "unchanged", err)
 		}
-		invocation.Source = objects[0].Source
+		invocation.Source = selectedSource
 	}
 
 	targetLock, err := lock.Acquire(invocation.Target)
@@ -189,6 +196,14 @@ func runRestore(args []string) error {
 	}
 	printResult(os.Stdout, invocation, plan)
 	return nil
+}
+
+func selectLatestSource(ctx context.Context, prefix string) (string, error) {
+	objects, err := source.List(ctx, prefix)
+	if err != nil {
+		return "", err
+	}
+	return objects[0].Source, nil
 }
 
 func printDiagnosis(w io.Writer, diagnosis source.Diagnosis) {

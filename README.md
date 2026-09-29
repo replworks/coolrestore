@@ -192,6 +192,15 @@ coolrestore diagnose \
   --source /backups/coolify-storage.tar.gz
 ```
 
+Diagnose the newest archive below an S3 prefix without downloading its body:
+
+```bash
+coolrestore diagnose \
+  --env-file ./coolrestore.env \
+  --source 's3://coolify-bucket/data/coolify/backups/volumes/replworks-team-0/wjpmbrff7txw1hqtwu4jb4xb/' \
+  --latest
+```
+
 List available S3 backup archives below a prefix without downloading them:
 
 ```bash
