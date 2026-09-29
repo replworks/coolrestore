@@ -43,6 +43,69 @@ type S3API interface {
 	GetObject(context.Context, *s3.GetObjectInput, ...func(*s3.Options)) (*s3.GetObjectOutput, error)
 }
 
+// S3HeadAPI is the AWS SDK surface required for read-only source diagnosis.
+type S3HeadAPI interface {
+	HeadObject(context.Context, *s3.HeadObjectInput, ...func(*s3.Options)) (*s3.HeadObjectOutput, error)
+}
+
+// Diagnosis contains non-sensitive information about an accessible source.
+type Diagnosis struct {
+	Source string
+	Bucket string
+	Key    string
+	Size   int64
+}
+
+// Diagnose checks source access without modifying a target or downloading an
+// S3 object body.
+func Diagnose(ctx context.Context, source string) (Diagnosis, error) {
+	if strings.HasPrefix(source, "s3://") {
+		client, err := newS3Client(ctx)
+		if err != nil {
+			return Diagnosis{}, err
+		}
+		return diagnoseS3(ctx, source, client)
+	}
+	return diagnoseLocal(source)
+}
+
+func diagnoseLocal(path string) (Diagnosis, error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return Diagnosis{}, fmt.Errorf("checking local archive %q: %w", path, err)
+	}
+	if !info.Mode().IsRegular() {
+		return Diagnosis{}, fmt.Errorf("checking local archive %q: source is not a regular file", path)
+	}
+	file, err := os.Open(path)
+	if err != nil {
+		return Diagnosis{}, fmt.Errorf("checking local archive %q: %w", path, err)
+	}
+	closeErr := file.Close()
+	if closeErr != nil {
+		return Diagnosis{}, fmt.Errorf("checking local archive %q: %w", path, closeErr)
+	}
+	return Diagnosis{Source: path, Size: info.Size()}, nil
+}
+
+func diagnoseS3(ctx context.Context, source string, client S3HeadAPI) (Diagnosis, error) {
+	bucket, key, err := parseS3Source(source)
+	if err != nil {
+		return Diagnosis{}, err
+	}
+	output, err := client.HeadObject(ctx, &s3.HeadObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		return Diagnosis{}, fmt.Errorf("checking S3 object %s: %w", source, err)
+	}
+	if output == nil || output.ContentLength == nil {
+		return Diagnosis{}, fmt.Errorf("checking S3 object %s: response size is missing", source)
+	}
+	return Diagnosis{Source: source, Bucket: bucket, Key: key, Size: *output.ContentLength}, nil
+}
+
 // Acquire makes source available as a local archive file. It does not inspect
 // archive contents; integrity and structural validation are later stages.
 func Acquire(ctx context.Context, source string, skipChecksum bool) (Artifact, error) {

@@ -34,7 +34,7 @@ func TestAcquireLocalRejectsUnreadableOrMissingSource(t *testing.T) {
 }
 
 func TestAcquireS3DownloadsThroughClient(t *testing.T) {
-	client := fakeS3Client{body: "archive from RustFS"}
+	client := &fakeS3Client{body: "archive from RustFS"}
 	artifact, err := acquireS3(context.Background(), "s3://bucket/path/archive.tar.gz", client, false)
 	if err != nil {
 		t.Fatalf("acquireS3() error = %v", err)
@@ -47,6 +47,41 @@ func TestAcquireS3DownloadsThroughClient(t *testing.T) {
 	}
 	if string(contents) != client.body {
 		t.Fatalf("downloaded contents = %q, want %q", contents, client.body)
+	}
+}
+
+func TestDiagnoseS3UsesHeadObjectWithoutDownloadingBody(t *testing.T) {
+	client := &fakeS3Client{headSize: 42}
+	diagnosis, err := diagnoseS3(context.Background(), "s3://bucket/path/archive.tar.gz", client)
+	if err != nil {
+		t.Fatalf("diagnoseS3() error = %v", err)
+	}
+	if diagnosis.Bucket != "bucket" || diagnosis.Key != "path/archive.tar.gz" || diagnosis.Size != 42 {
+		t.Fatalf("unexpected diagnosis: %+v", diagnosis)
+	}
+	if client.headCalls != 1 || client.getCalls != 0 {
+		t.Fatalf("S3 calls = head:%d get:%d, want head:1 get:0", client.headCalls, client.getCalls)
+	}
+}
+
+func TestDiagnoseLocalChecksReadableRegularFile(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "backup.tar.gz")
+	if err := os.WriteFile(path, []byte("archive"), 0o600); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
+	diagnosis, err := diagnoseLocal(path)
+	if err != nil {
+		t.Fatalf("diagnoseLocal() error = %v", err)
+	}
+	if diagnosis.Source != path || diagnosis.Size != int64(len("archive")) {
+		t.Fatalf("unexpected diagnosis: %+v", diagnosis)
+	}
+}
+
+func TestDiagnoseS3RejectsHeadObjectFailure(t *testing.T) {
+	_, err := diagnoseS3(context.Background(), "s3://bucket/archive.tar.gz", &fakeS3Client{headErr: io.ErrUnexpectedEOF})
+	if err == nil || !strings.Contains(err.Error(), "checking S3 object") {
+		t.Fatalf("diagnoseS3() error = %v", err)
 	}
 }
 
@@ -71,14 +106,14 @@ func TestParseS3Source(t *testing.T) {
 }
 
 func TestAcquireS3RejectsRequestFailure(t *testing.T) {
-	_, err := acquireS3(context.Background(), "s3://bucket/archive.tar.gz", fakeS3Client{err: io.ErrUnexpectedEOF}, false)
+	_, err := acquireS3(context.Background(), "s3://bucket/archive.tar.gz", &fakeS3Client{err: io.ErrUnexpectedEOF}, false)
 	if err == nil || !strings.Contains(err.Error(), "downloading") {
 		t.Fatalf("acquireS3() error = %v", err)
 	}
 }
 
 func TestAcquireS3RejectsSizeMismatch(t *testing.T) {
-	_, err := acquireS3(context.Background(), "s3://bucket/archive.tar.gz", fakeS3Client{
+	_, err := acquireS3(context.Background(), "s3://bucket/archive.tar.gz", &fakeS3Client{
 		body:          "short",
 		contentLength: 100,
 	}, false)
@@ -88,7 +123,7 @@ func TestAcquireS3RejectsSizeMismatch(t *testing.T) {
 }
 
 func TestAcquireS3SkipChecksumAllowsSizeMismatch(t *testing.T) {
-	client := fakeS3Client{body: "short", contentLength: 100}
+	client := &fakeS3Client{body: "short", contentLength: 100}
 	artifact, err := acquireS3(context.Background(), "s3://bucket/archive.tar.gz", client, true)
 	if err != nil {
 		t.Fatalf("acquireS3() error = %v", err)
@@ -115,9 +150,14 @@ type fakeS3Client struct {
 	body          string
 	contentLength int64
 	err           error
+	headSize      int64
+	headErr       error
+	headCalls     int
+	getCalls      int
 }
 
-func (client fakeS3Client) GetObject(context.Context, *s3.GetObjectInput, ...func(*s3.Options)) (*s3.GetObjectOutput, error) {
+func (client *fakeS3Client) GetObject(context.Context, *s3.GetObjectInput, ...func(*s3.Options)) (*s3.GetObjectOutput, error) {
+	client.getCalls++
 	if client.err != nil {
 		return nil, client.err
 	}
@@ -129,4 +169,13 @@ func (client fakeS3Client) GetObject(context.Context, *s3.GetObjectInput, ...fun
 		Body:          io.NopCloser(strings.NewReader(client.body)),
 		ContentLength: &contentLength,
 	}, nil
+}
+
+func (client *fakeS3Client) HeadObject(context.Context, *s3.HeadObjectInput, ...func(*s3.Options)) (*s3.HeadObjectOutput, error) {
+	client.headCalls++
+	if client.headErr != nil {
+		return nil, client.headErr
+	}
+	size := client.headSize
+	return &s3.HeadObjectOutput{ContentLength: &size}, nil
 }

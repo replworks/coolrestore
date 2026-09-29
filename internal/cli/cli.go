@@ -25,6 +25,13 @@ type Invocation struct {
 	EnvFile      string
 }
 
+// DiagnoseInvocation contains the normalized input for a read-only source
+// diagnosis.
+type DiagnoseInvocation struct {
+	Source  string
+	EnvFile string
+}
+
 // Parse parses and validates command-line input. It deliberately performs no
 // filesystem or network access, so invalid requests fail before any resource
 // can be touched.
@@ -50,6 +57,30 @@ func Parse(args []string) (Invocation, error) {
 
 	if err := validate(invocation); err != nil {
 		return Invocation{}, err
+	}
+	return invocation, nil
+}
+
+// ParseDiagnose parses the arguments for the read-only diagnose subcommand.
+func ParseDiagnose(args []string) (DiagnoseInvocation, error) {
+	flags := flag.NewFlagSet("coolrestore diagnose", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+
+	var invocation DiagnoseInvocation
+	flags.StringVar(&invocation.Source, "source", "", "local archive path or s3://bucket/object-key")
+	flags.StringVar(&invocation.EnvFile, "env-file", "", "explicit S3 environment file")
+
+	if err := flags.Parse(args); err != nil {
+		return DiagnoseInvocation{}, err
+	}
+	if flags.NArg() != 0 {
+		return DiagnoseInvocation{}, fmt.Errorf("unexpected positional arguments: %s", strings.Join(flags.Args(), " "))
+	}
+	if invocation.Source == "" {
+		return DiagnoseInvocation{}, errors.New("--source is required")
+	}
+	if err := validateSource(invocation.Source); err != nil {
+		return DiagnoseInvocation{}, err
 	}
 	return invocation, nil
 }

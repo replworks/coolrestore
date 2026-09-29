@@ -138,6 +138,19 @@ are complete.
     - The command never auto-discovers `./coolrestore.env`, evaluates shell
       syntax, or prints credential values.
 
+- [x] **Task 7.4 — Diagnose source connectivity before restore**
+  - **Acceptance Criteria**
+    - Given a reachable S3 source and valid credentials, `coolrestore diagnose`
+      reports successful access to the specified object without downloading
+      its body or requiring a target directory.
+    - Given invalid configuration, credentials, endpoint, bucket, or object,
+      diagnosis reports the failed step and exits non-zero without changing
+      local files.
+    - Given a local source, diagnosis confirms that the source is a readable
+      regular file.
+    - Diagnosis supports the same explicit `--env-file` behavior as restore
+      and never prints credential values.
+
 ---
 
 ### Future

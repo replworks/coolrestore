@@ -8,6 +8,9 @@ coolrestore restores a previously created storage backup
 archive into a specified directory on a server, so that files lost or
 overwritten can be brought back exactly as they existed in the backup.
 
+The product also provides a read-only `diagnose` command so an operator can
+verify source connectivity and access before attempting a restore.
+
 ## Problem
 
 A storage backup archive exists in S3-compatible storage or as a local
@@ -151,8 +154,24 @@ cannot be trusted to be well-formed.
     comments, and must not evaluate shell syntax. A missing, unreadable, or
     malformed environment file must fail without accessing the target or
     archive source.
+19. The `diagnose` command must be read-only, require `--source`, accept the
+    same local or S3 source forms as restore, and never require or access a
+    restore target. For an S3 source it must verify client configuration,
+    credentials, and access to the specified bucket/object without downloading
+    the object body. It must report a successful reachability result or a
+    failure step without displaying credential values.
 
 ## User Flows
+
+### Flow 0 — Diagnose an archive source
+
+1. Operator specifies an archive source and, when needed, an explicit S3
+   environment file.
+2. Product validates the source and loads the selected environment file.
+3. For an S3 source, product authenticates and checks metadata access to the
+   specified object without downloading its body. For a local source, product
+   checks that the archive is a readable regular file.
+4. Product reports the source diagnosis without changing any target.
 
 ### Flow 1 — Preview a restore (default)
 

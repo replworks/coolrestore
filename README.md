@@ -132,6 +132,23 @@ Replace the placeholder values before use. The release also includes the example
 
 ## Usage
 
+Diagnose an S3 source before restoring. This is read-only: it checks the
+environment configuration, credentials, endpoint, and object metadata
+without downloading the archive body or requiring a target directory:
+
+```bash
+coolrestore diagnose \
+  --env-file ./coolrestore.env \
+  --source 's3://coolify-bucket/data/coolify/backups/volumes/replworks-team-0/wjpmbrff7txw1hqtwu4jb4xb/directory-datawifinotestorage-1790266116.tar.gz'
+```
+
+For a local archive, diagnosis checks that the path exists and is readable:
+
+```bash
+coolrestore diagnose \
+  --source /backups/coolify-storage.tar.gz
+```
+
 Preview a local archive. Preview is the default and does not modify the target directory:
 
 ```bash

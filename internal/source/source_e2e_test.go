@@ -63,6 +63,13 @@ func TestRustFSE2E(t *testing.T) {
 	}); err != nil {
 		t.Fatalf("PutObject() error = %v", err)
 	}
+	diagnosis, err := Diagnose(ctx, "s3://"+bucket+"/"+key)
+	if err != nil {
+		t.Fatalf("Diagnose() error = %v", err)
+	}
+	if diagnosis.Bucket != bucket || diagnosis.Key != key || diagnosis.Size != int64(len(want)) {
+		t.Fatalf("unexpected diagnosis: %+v", diagnosis)
+	}
 
 	artifact, err := Acquire(ctx, "s3://"+bucket+"/"+key, false)
 	if err != nil {

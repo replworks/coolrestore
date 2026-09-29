@@ -29,6 +29,28 @@ func TestParseAcceptsValidS3Request(t *testing.T) {
 	}
 }
 
+func TestParseDiagnoseAcceptsSourceAndEnvFileWithoutTarget(t *testing.T) {
+	invocation, err := ParseDiagnose([]string{
+		"--source", "s3://backup-bucket/path/backup.tar.gz",
+		"--env-file", "./coolrestore.env",
+	})
+	if err != nil {
+		t.Fatalf("ParseDiagnose() error = %v", err)
+	}
+	if invocation.Source != "s3://backup-bucket/path/backup.tar.gz" || invocation.EnvFile != "./coolrestore.env" {
+		t.Fatalf("unexpected invocation: %+v", invocation)
+	}
+}
+
+func TestParseDiagnoseRejectsRestoreOnlyFlags(t *testing.T) {
+	if _, err := ParseDiagnose([]string{
+		"--source", "/tmp/archive.tar.gz",
+		"--target", "/tmp/target",
+	}); err == nil {
+		t.Fatal("ParseDiagnose() unexpectedly accepted --target")
+	}
+}
+
 func TestParseRejectsInvalidRequests(t *testing.T) {
 	tests := []struct {
 		name string
