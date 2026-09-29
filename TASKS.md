@@ -126,6 +126,18 @@ are complete.
     - Release distribution makes the same wrapper guidance available to
       operators who obtain the binary without cloning the repository.
 
+- [x] **Task 7.3 — Select S3 credentials with an explicit environment file**
+  - **Acceptance Criteria**
+    - Given an explicit dotenv-style environment file, the command loads the
+      supported S3 variables before archive acquisition without requiring an
+      install-path-specific wrapper.
+    - Given a missing, unreadable, malformed, duplicate, or unknown entry, the
+      command fails before accessing the target or archive source.
+    - Given no `--env-file`, existing process environment and the AWS SDK
+      default credential provider chain continue to work as before.
+    - The command never auto-discovers `./coolrestore.env`, evaluates shell
+      syntax, or prints credential values.
+
 ---
 
 ### Future

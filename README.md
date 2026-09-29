@@ -92,7 +92,32 @@ export AWS_S3_FORCE_PATH_STYLE=true
 If these variables are not set, the AWS SDK default credential chain is used.
 Credentials are never accepted as command-line flags.
 
-coolrestore does not create or require a persistent configuration file.
+For package installations, an explicit environment file can be selected
+without depending on the install path:
+
+```bash
+cat > ./coolrestore.env <<'EOF'
+AWS_ACCESS_KEY_ID=replace-me
+AWS_SECRET_ACCESS_KEY=replace-me
+AWS_REGION=us-east-1
+AWS_ENDPOINT_URL=https://s3-compatible.example.com
+AWS_S3_FORCE_PATH_STYLE=true
+EOF
+chmod 600 ./coolrestore.env
+```
+
+Use it explicitly when running a restore:
+
+```bash
+coolrestore \
+  --env-file ./coolrestore.env \
+  --source 's3://bucket/object-key.tar.gz' \
+  --target /tmp/coolrestore-test
+```
+
+The file uses simple `KEY=VALUE` entries. Blank lines and full-line comments
+are allowed; shell commands and `export` statements are not evaluated.
+`./coolrestore.env` is never auto-discovered.
 
 For repeated restores, use the wrapper examples in [`examples/`](./examples/) with a protected environment file instead of manually exporting credentials for each command:
 
@@ -119,6 +144,7 @@ Use an S3-compatible object as the source:
 
 ```bash
 coolrestore \
+  --env-file ./coolrestore.env \
   --source s3://coolify-backups/storage/2026-09-26.tar.gz \
   --target /var/lib/coolify/storage
 ```

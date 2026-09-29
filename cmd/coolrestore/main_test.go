@@ -30,6 +30,26 @@ func TestRunSkipChecksumStillRejectsInvalidArchiveStructure(t *testing.T) {
 	}
 }
 
+func TestRunRejectsMalformedEnvFileBeforeAccessingArchiveOrTarget(t *testing.T) {
+	base := t.TempDir()
+	envPath := filepath.Join(base, "coolrestore.env")
+	if err := os.WriteFile(envPath, []byte("export AWS_REGION=us-east-1\n"), 0o600); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
+	target := filepath.Join(base, "target")
+	err := run([]string{
+		"--env-file", envPath,
+		"--source", filepath.Join(base, "missing.tar.gz"),
+		"--target", target,
+	})
+	if err == nil || !strings.Contains(err.Error(), "supported KEY=VALUE assignment") {
+		t.Fatalf("run() error = %v", err)
+	}
+	if _, err := os.Stat(target); !os.IsNotExist(err) {
+		t.Fatalf("target stat error = %v, target should not be created", err)
+	}
+}
+
 func TestRunRejectsEachUnsafeArchiveEntryWithoutChangingTarget(t *testing.T) {
 	tests := []struct {
 		name    string

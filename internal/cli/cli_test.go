@@ -16,12 +16,16 @@ func TestParseAcceptsValidMergeRequestWithoutAccessingResources(t *testing.T) {
 }
 
 func TestParseAcceptsValidS3Request(t *testing.T) {
-	_, err := Parse([]string{
+	invocation, err := Parse([]string{
 		"--source", "s3://backup-bucket/path/backup.tar.gz",
 		"--target", "/tmp/coolrestore-target-does-not-exist",
+		"--env-file", "./coolrestore.env",
 	})
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
+	}
+	if invocation.EnvFile != "./coolrestore.env" {
+		t.Fatalf("EnvFile = %q", invocation.EnvFile)
 	}
 }
 

@@ -50,9 +50,13 @@ cannot be trusted to be well-formed.
   `--staging`, or an operating-system temporary directory when omitted.
 - **Optional integrity-check override**: `--skip-checksum`, a signal to
   skip the size-based integrity check before restoring the archive.
+- **Optional S3 environment file**: `--env-file`, an explicitly selected
+  dotenv-style file containing S3 access environment variables. The file is
+  not selected implicitly from the current directory.
 - **S3 access information**: supplied only through the environment variables
-  or AWS SDK default credential provider chain defined in FRAMEWORK.md, never
-  as direct credential input.
+  loaded from the optional environment file, the process environment, or the
+  AWS SDK default credential provider chain defined in FRAMEWORK.md, never as
+  direct credential input.
 
 ## Outputs
 
@@ -141,6 +145,12 @@ cannot be trusted to be well-formed.
     the configured environment variables or the AWS SDK default credential
     provider chain. If no credentials are available, it must report the
     supported wrapper mechanism without displaying credential values.
+18. When `--env-file` is supplied, the product must load that file before
+    acquiring the target lock or archive. It must accept only the supported
+    `KEY=VALUE` S3 environment entries, ignore blank lines and full-line
+    comments, and must not evaluate shell syntax. A missing, unreadable, or
+    malformed environment file must fail without accessing the target or
+    archive source.
 
 ## User Flows
 

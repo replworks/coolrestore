@@ -8,6 +8,7 @@ import (
 
 	"github.com/replworks/coolrestore/internal/archive"
 	"github.com/replworks/coolrestore/internal/cli"
+	"github.com/replworks/coolrestore/internal/config"
 	"github.com/replworks/coolrestore/internal/lock"
 	"github.com/replworks/coolrestore/internal/restore"
 	"github.com/replworks/coolrestore/internal/source"
@@ -30,6 +31,11 @@ func run(args []string) error {
 	invocation, err := cli.Parse(args)
 	if err != nil {
 		return err
+	}
+	if invocation.EnvFile != "" {
+		if err := config.LoadEnvFile(invocation.EnvFile); err != nil {
+			return reportFailure(invocation, "environment file", "unchanged", err)
+		}
 	}
 
 	targetLock, err := lock.Acquire(invocation.Target)
