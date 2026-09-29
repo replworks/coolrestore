@@ -44,6 +44,31 @@ file /usr/local/bin/coolrestore
 Release binaries are statically built for Linux and macOS on `amd64` and
 `arm64`; Windows archives are also published.
 
+### Debian and Ubuntu (APT)
+
+Install the signed Replworks APT repository and install `coolrestore`:
+
+```bash
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://apt.repl.net/replworks.gpg \
+  | sudo tee /etc/apt/keyrings/replworks.gpg >/dev/null
+echo "deb [signed-by=/etc/apt/keyrings/replworks.gpg] https://apt.repl.net stable main" \
+  | sudo tee /etc/apt/sources.list.d/replworks.list
+sudo apt update
+sudo apt install coolrestore
+```
+
+Upgrade it later with:
+
+```bash
+sudo apt update
+sudo apt install --only-upgrade coolrestore
+```
+
+The repository publishes Debian packages for supported `amd64` and `arm64`
+systems. See the [Replworks APT repository](https://github.com/replworks/apt)
+for repository details.
+
 ### Homebrew Cask
 
 Install the published cask from the Replworks tap:
