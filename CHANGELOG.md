@@ -1,5 +1,14 @@
 # Release Notes
 
+## v1.1.0 - 2026-09-29
+
+### What's Changed
+
+* feat: add APT installation instructions for Debian and Ubuntu by [@cable8mm](https://github.com/cable8mm) in https://github.com/replworks/coolrestore/pull/25
+* feat: add --latest option to diagnose for selecting the newest S3 archive by [@cable8mm](https://github.com/cable8mm) in https://github.com/replworks/coolrestore/pull/26
+
+**Full Changelog**: https://github.com/replworks/coolrestore/compare/v1.0.0...v1.1.0
+
 ## v1.0.0 - 2026-09-29
 
 ### What's Changed
