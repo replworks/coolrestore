@@ -1,5 +1,19 @@
 # Release Notes
 
+## v1.0.0 - 2026-09-29
+
+### What's Changed
+
+* feat: add support for explicit S3 environment file with --env-file option by [@cable8mm](https://github.com/cable8mm) in https://github.com/replworks/coolrestore/pull/18
+* feat: add diagnose command by [@cable8mm](https://github.com/cable8mm) in https://github.com/replworks/coolrestore/pull/19
+* feat: add version reporting with --version command by [@cable8mm](https://github.com/cable8mm) in https://github.com/replworks/coolrestore/pull/20
+* chore: remove examples files by [@cable8mm](https://github.com/cable8mm) in https://github.com/replworks/coolrestore/pull/21
+* feat: add help command for usage instructions and enhance diagnose command help by [@cable8mm](https://github.com/cable8mm) in https://github.com/replworks/coolrestore/pull/22
+* feat: add list command for S3 archive discovery and selection by [@cable8mm](https://github.com/cable8mm) in https://github.com/replworks/coolrestore/pull/23
+* feat: mark task 7.6 as complete for S3 backup archive discovery and selection by [@cable8mm](https://github.com/cable8mm) in https://github.com/replworks/coolrestore/pull/24
+
+**Full Changelog**: https://github.com/replworks/coolrestore/compare/v0.1.2...v1.0.0
+
 ## v0.1.2 - 2026-09-28
 
 ### What's Changed
