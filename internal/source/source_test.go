@@ -137,11 +137,11 @@ func TestVerifySizeRejectsTruncatedReader(t *testing.T) {
 	}
 }
 
-func TestCredentialWrapperHintDoesNotContainCredentialValues(t *testing.T) {
+func TestCredentialHintDoesNotContainCredentialValues(t *testing.T) {
 	if strings.Contains(credentialWrapperHint, "AWS_SECRET_ACCESS_KEY=") {
 		t.Fatal("credential wrapper hint contains a credential assignment")
 	}
-	if !strings.Contains(credentialWrapperHint, "protected environment wrapper") {
+	if !strings.Contains(credentialWrapperHint, "--env-file") {
 		t.Fatalf("credential wrapper hint = %q", credentialWrapperHint)
 	}
 }
