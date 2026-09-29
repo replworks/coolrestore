@@ -22,6 +22,7 @@ type Invocation struct {
 	Confirm      bool
 	Staging      string
 	SkipChecksum bool
+	EnvFile      string
 }
 
 // Parse parses and validates command-line input. It deliberately performs no
@@ -38,6 +39,7 @@ func Parse(args []string) (Invocation, error) {
 	flags.BoolVar(&invocation.Confirm, "confirm", false, "authorize target changes")
 	flags.StringVar(&invocation.Staging, "staging", "", "staging base directory")
 	flags.BoolVar(&invocation.SkipChecksum, "skip-checksum", false, "skip size-based integrity verification")
+	flags.StringVar(&invocation.EnvFile, "env-file", "", "explicit S3 environment file")
 
 	if err := flags.Parse(args); err != nil {
 		return Invocation{}, err

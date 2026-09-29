@@ -187,7 +187,28 @@ The restore invocation uses these standard-library `flag` options:
 --confirm         optional authorization for Change Application
 --staging         optional staging base directory
 --skip-checksum   optional; skip only the size-based integrity comparison
+--env-file        optional explicit dotenv-style S3 environment file
 ```
+
+`--env-file` accepts a path relative to the current working directory or an
+absolute path. It is read only when explicitly supplied; `./coolrestore.env`
+is never auto-discovered. The file format is one supported environment
+variable assignment per line:
+
+```text
+AWS_ACCESS_KEY_ID=value
+AWS_SECRET_ACCESS_KEY=value
+AWS_REGION=value
+AWS_ENDPOINT_URL=value
+AWS_S3_FORCE_PATH_STYLE=true|false
+```
+
+Blank lines and lines beginning with `#` are ignored. Shell commands,
+`export` statements, unknown variable names, malformed assignments, and
+duplicate keys are rejected. Values from the explicitly selected file are
+loaded into the process environment before target locking and archive
+acquisition. The file's contents are never written to logs or included in
+failure reports.
 
 The final target path component must not be a symbolic link. Existing parent
 symbolic links may be resolved before target validation. A target that does
@@ -337,8 +358,9 @@ If none of the above are set, fall back to the AWS SDK's default
 credential provider chain.
 
 The tool must not accept credential values through CLI flags or positional
-arguments. Operators may use a protected external environment file and a
-wrapper script to provide these variables for repeated restores. Repository
+arguments. Operators may use a protected external environment file selected
+with `--env-file`, or a wrapper script to provide these variables for repeated
+restores. Repository
 examples live under:
 
 ```text
