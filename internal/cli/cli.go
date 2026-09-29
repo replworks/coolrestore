@@ -31,6 +31,7 @@ type Invocation struct {
 // diagnosis.
 type DiagnoseInvocation struct {
 	Source  string
+	Latest  bool
 	EnvFile string
 }
 
@@ -74,7 +75,13 @@ func ParseDiagnose(args []string) (DiagnoseInvocation, error) {
 	if invocation.Source == "" {
 		return DiagnoseInvocation{}, errors.New("--source is required")
 	}
-	if err := validateSource(invocation.Source); err != nil {
+	if invocation.Latest {
+		if err := validateS3Prefix(invocation.Source); err != nil {
+			return DiagnoseInvocation{}, fmt.Errorf("--latest requires an S3 prefix source ending in /: %w", err)
+		}
+	} else if isS3Prefix(invocation.Source) {
+		return DiagnoseInvocation{}, errors.New("an S3 prefix source ending in / requires --latest")
+	} else if err := validateSource(invocation.Source); err != nil {
 		return DiagnoseInvocation{}, err
 	}
 	return invocation, nil
@@ -105,7 +112,7 @@ func PrintUsage(w io.Writer) {
 	flags := newRestoreFlagSet(w, &invocation)
 	_, _ = fmt.Fprintln(w, "Usage: coolrestore [flags]")
 	flags.PrintDefaults()
-	_, _ = fmt.Fprintln(w, "       coolrestore diagnose --source SOURCE [--env-file PATH]")
+	_, _ = fmt.Fprintln(w, "       coolrestore diagnose --source SOURCE [--latest] [--env-file PATH]")
 	_, _ = fmt.Fprintln(w, "       coolrestore list --source PREFIX [--env-file PATH]")
 	_, _ = fmt.Fprintln(w, "       coolrestore --version")
 }
@@ -114,7 +121,7 @@ func PrintUsage(w io.Writer) {
 func PrintDiagnoseUsage(w io.Writer) {
 	var invocation DiagnoseInvocation
 	flags := newDiagnoseFlagSet(w, &invocation)
-	_, _ = fmt.Fprintln(w, "Usage: coolrestore diagnose --source SOURCE [--env-file PATH]")
+	_, _ = fmt.Fprintln(w, "Usage: coolrestore diagnose --source SOURCE [--latest] [--env-file PATH]")
 	flags.PrintDefaults()
 }
 
@@ -152,6 +159,7 @@ func newDiagnoseFlagSet(output io.Writer, invocation *DiagnoseInvocation) *flag.
 	flags := flag.NewFlagSet("coolrestore diagnose", flag.ContinueOnError)
 	flags.SetOutput(output)
 	flags.StringVar(&invocation.Source, "source", "", "local archive path or s3://bucket/object-key")
+	flags.BoolVar(&invocation.Latest, "latest", false, "select the newest .tar.gz object below an S3 prefix source")
 	flags.StringVar(&invocation.EnvFile, "env-file", "", "explicit S3 environment file")
 	return flags
 }

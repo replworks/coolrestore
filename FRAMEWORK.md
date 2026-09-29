@@ -207,13 +207,15 @@ tie-breaking.
 The diagnostic invocation is a separate subcommand and uses:
 
 ```text
-coolrestore diagnose --source SOURCE [--env-file PATH]
+coolrestore diagnose --source SOURCE [--latest] [--env-file PATH]
 ```
 
 It must not accept or require `--target`, `--confirm`, `--mode`, or
 `--staging`. For an S3 source, diagnosis uses the same AWS SDK client
 configuration as restore and performs `HeadObject` for the specified bucket
-and key. It must not call `GetObject` or download the archive body.
+and key. When `--latest` is supplied with a trailing-slash S3 source, it uses
+the same list-and-select logic as restore before performing `HeadObject`. It
+must not call `GetObject` or download the archive body.
 
 `--env-file` accepts a path relative to the current working directory or an
 absolute path. It is read only when explicitly supplied; `./coolrestore.env`
