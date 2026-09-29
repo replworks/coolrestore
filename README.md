@@ -81,6 +81,14 @@ Verify the installed binary version:
 coolrestore --version
 ```
 
+Show the available commands and restore options:
+
+```bash
+coolrestore help
+# or
+coolrestore --help
+```
+
 ---
 
 ## Configuration

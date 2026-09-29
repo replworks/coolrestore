@@ -6,6 +6,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -36,17 +37,8 @@ type DiagnoseInvocation struct {
 // filesystem or network access, so invalid requests fail before any resource
 // can be touched.
 func Parse(args []string) (Invocation, error) {
-	flags := flag.NewFlagSet("coolrestore", flag.ContinueOnError)
-	flags.SetOutput(os.Stderr)
-
 	var invocation Invocation
-	flags.StringVar(&invocation.Source, "source", "", "local archive path or s3://bucket/object-key")
-	flags.StringVar(&invocation.Target, "target", "", "absolute restore target directory")
-	flags.StringVar(&invocation.Mode, "mode", "merge", "restore mode: merge or replace")
-	flags.BoolVar(&invocation.Confirm, "confirm", false, "authorize target changes")
-	flags.StringVar(&invocation.Staging, "staging", "", "staging base directory")
-	flags.BoolVar(&invocation.SkipChecksum, "skip-checksum", false, "skip size-based integrity verification")
-	flags.StringVar(&invocation.EnvFile, "env-file", "", "explicit S3 environment file")
+	flags := newRestoreFlagSet(os.Stderr, &invocation)
 
 	if err := flags.Parse(args); err != nil {
 		return Invocation{}, err
@@ -63,12 +55,8 @@ func Parse(args []string) (Invocation, error) {
 
 // ParseDiagnose parses the arguments for the read-only diagnose subcommand.
 func ParseDiagnose(args []string) (DiagnoseInvocation, error) {
-	flags := flag.NewFlagSet("coolrestore diagnose", flag.ContinueOnError)
-	flags.SetOutput(os.Stderr)
-
 	var invocation DiagnoseInvocation
-	flags.StringVar(&invocation.Source, "source", "", "local archive path or s3://bucket/object-key")
-	flags.StringVar(&invocation.EnvFile, "env-file", "", "explicit S3 environment file")
+	flags := newDiagnoseFlagSet(os.Stderr, &invocation)
 
 	if err := flags.Parse(args); err != nil {
 		return DiagnoseInvocation{}, err
@@ -83,6 +71,45 @@ func ParseDiagnose(args []string) (DiagnoseInvocation, error) {
 		return DiagnoseInvocation{}, err
 	}
 	return invocation, nil
+}
+
+// PrintUsage writes the root command's usage and all supported restore flags.
+func PrintUsage(w io.Writer) {
+	var invocation Invocation
+	flags := newRestoreFlagSet(w, &invocation)
+	fmt.Fprintln(w, "Usage: coolrestore [flags]")
+	flags.PrintDefaults()
+	fmt.Fprintln(w, "       coolrestore diagnose --source SOURCE [--env-file PATH]")
+	fmt.Fprintln(w, "       coolrestore --version")
+}
+
+// PrintDiagnoseUsage writes the diagnose subcommand's usage and flags.
+func PrintDiagnoseUsage(w io.Writer) {
+	var invocation DiagnoseInvocation
+	flags := newDiagnoseFlagSet(w, &invocation)
+	fmt.Fprintln(w, "Usage: coolrestore diagnose --source SOURCE [--env-file PATH]")
+	flags.PrintDefaults()
+}
+
+func newRestoreFlagSet(output io.Writer, invocation *Invocation) *flag.FlagSet {
+	flags := flag.NewFlagSet("coolrestore", flag.ContinueOnError)
+	flags.SetOutput(output)
+	flags.StringVar(&invocation.Source, "source", "", "local archive path or s3://bucket/object-key")
+	flags.StringVar(&invocation.Target, "target", "", "absolute restore target directory")
+	flags.StringVar(&invocation.Mode, "mode", "merge", "restore mode: merge or replace")
+	flags.BoolVar(&invocation.Confirm, "confirm", false, "authorize target changes")
+	flags.StringVar(&invocation.Staging, "staging", "", "staging base directory")
+	flags.BoolVar(&invocation.SkipChecksum, "skip-checksum", false, "skip size-based integrity verification")
+	flags.StringVar(&invocation.EnvFile, "env-file", "", "explicit S3 environment file")
+	return flags
+}
+
+func newDiagnoseFlagSet(output io.Writer, invocation *DiagnoseInvocation) *flag.FlagSet {
+	flags := flag.NewFlagSet("coolrestore diagnose", flag.ContinueOnError)
+	flags.SetOutput(output)
+	flags.StringVar(&invocation.Source, "source", "", "local archive path or s3://bucket/object-key")
+	flags.StringVar(&invocation.EnvFile, "env-file", "", "explicit S3 environment file")
+	return flags
 }
 
 func validate(invocation Invocation) error {

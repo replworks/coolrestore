@@ -18,6 +18,22 @@ func TestPrintVersion(t *testing.T) {
 	}
 }
 
+func TestRunHelpSucceedsWithoutRestoreArguments(t *testing.T) {
+	for _, argument := range []string{"help", "--help"} {
+		t.Run(argument, func(t *testing.T) {
+			if err := run([]string{argument}); err != nil {
+				t.Fatalf("run(%q) error = %v", argument, err)
+			}
+		})
+	}
+}
+
+func TestRunDiagnoseHelpSucceedsWithoutSource(t *testing.T) {
+	if err := run([]string{"diagnose", "--help"}); err != nil {
+		t.Fatalf("run(diagnose --help) error = %v", err)
+	}
+}
+
 func TestRunSkipChecksumStillRejectsInvalidArchiveStructure(t *testing.T) {
 	base := t.TempDir()
 	archivePath := filepath.Join(base, "invalid.tar.gz")
