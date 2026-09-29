@@ -18,6 +18,7 @@ import (
 // restore operation. Resource and target inspection belongs to later stages.
 type Invocation struct {
 	Source       string
+	Latest       bool
 	Target       string
 	Mode         string
 	Confirm      bool
@@ -29,6 +30,12 @@ type Invocation struct {
 // DiagnoseInvocation contains the normalized input for a read-only source
 // diagnosis.
 type DiagnoseInvocation struct {
+	Source  string
+	EnvFile string
+}
+
+// ListInvocation contains the normalized input for a read-only S3 listing.
+type ListInvocation struct {
 	Source  string
 	EnvFile string
 }
@@ -73,6 +80,25 @@ func ParseDiagnose(args []string) (DiagnoseInvocation, error) {
 	return invocation, nil
 }
 
+// ParseList parses the arguments for the read-only list subcommand.
+func ParseList(args []string) (ListInvocation, error) {
+	var invocation ListInvocation
+	flags := newListFlagSet(os.Stderr, &invocation)
+	if err := flags.Parse(args); err != nil {
+		return ListInvocation{}, err
+	}
+	if flags.NArg() != 0 {
+		return ListInvocation{}, fmt.Errorf("unexpected positional arguments: %s", strings.Join(flags.Args(), " "))
+	}
+	if invocation.Source == "" {
+		return ListInvocation{}, errors.New("--source is required")
+	}
+	if err := validateS3Prefix(invocation.Source); err != nil {
+		return ListInvocation{}, err
+	}
+	return invocation, nil
+}
+
 // PrintUsage writes the root command's usage and all supported restore flags.
 func PrintUsage(w io.Writer) {
 	var invocation Invocation
@@ -80,6 +106,7 @@ func PrintUsage(w io.Writer) {
 	_, _ = fmt.Fprintln(w, "Usage: coolrestore [flags]")
 	flags.PrintDefaults()
 	_, _ = fmt.Fprintln(w, "       coolrestore diagnose --source SOURCE [--env-file PATH]")
+	_, _ = fmt.Fprintln(w, "       coolrestore list --source PREFIX [--env-file PATH]")
 	_, _ = fmt.Fprintln(w, "       coolrestore --version")
 }
 
@@ -91,15 +118,32 @@ func PrintDiagnoseUsage(w io.Writer) {
 	flags.PrintDefaults()
 }
 
+// PrintListUsage writes the list subcommand's usage and flags.
+func PrintListUsage(w io.Writer) {
+	var invocation ListInvocation
+	flags := newListFlagSet(w, &invocation)
+	_, _ = fmt.Fprintln(w, "Usage: coolrestore list --source PREFIX [--env-file PATH]")
+	flags.PrintDefaults()
+}
+
 func newRestoreFlagSet(output io.Writer, invocation *Invocation) *flag.FlagSet {
 	flags := flag.NewFlagSet("coolrestore", flag.ContinueOnError)
 	flags.SetOutput(output)
 	flags.StringVar(&invocation.Source, "source", "", "local archive path or s3://bucket/object-key")
+	flags.BoolVar(&invocation.Latest, "latest", false, "select the newest .tar.gz object below an S3 prefix source")
 	flags.StringVar(&invocation.Target, "target", "", "absolute restore target directory")
 	flags.StringVar(&invocation.Mode, "mode", "merge", "restore mode: merge or replace")
 	flags.BoolVar(&invocation.Confirm, "confirm", false, "authorize target changes")
 	flags.StringVar(&invocation.Staging, "staging", "", "staging base directory")
 	flags.BoolVar(&invocation.SkipChecksum, "skip-checksum", false, "skip size-based integrity verification")
+	flags.StringVar(&invocation.EnvFile, "env-file", "", "explicit S3 environment file")
+	return flags
+}
+
+func newListFlagSet(output io.Writer, invocation *ListInvocation) *flag.FlagSet {
+	flags := flag.NewFlagSet("coolrestore list", flag.ContinueOnError)
+	flags.SetOutput(output)
+	flags.StringVar(&invocation.Source, "source", "", "S3 prefix to list; must end with /")
 	flags.StringVar(&invocation.EnvFile, "env-file", "", "explicit S3 environment file")
 	return flags
 }
@@ -116,7 +160,13 @@ func validate(invocation Invocation) error {
 	if invocation.Source == "" {
 		return errors.New("--source is required")
 	}
-	if err := validateSource(invocation.Source); err != nil {
+	if invocation.Latest {
+		if err := validateS3Prefix(invocation.Source); err != nil {
+			return fmt.Errorf("--latest requires an S3 prefix source ending in /: %w", err)
+		}
+	} else if isS3Prefix(invocation.Source) {
+		return errors.New("an S3 prefix source ending in / requires --latest")
+	} else if err := validateSource(invocation.Source); err != nil {
 		return err
 	}
 
@@ -158,6 +208,21 @@ func validateSource(source string) error {
 		return fmt.Errorf("--source must be an absolute local path or an S3 URI: %q", source)
 	}
 	return nil
+}
+
+func validateS3Prefix(prefix string) error {
+	if !strings.HasPrefix(prefix, "s3://") {
+		return fmt.Errorf("S3 prefix must be an S3 URI: %q", prefix)
+	}
+	parsed, err := url.Parse(prefix)
+	if err != nil || parsed.Scheme != "s3" || parsed.Host == "" || parsed.Path == "" || parsed.Path == "/" || !strings.HasSuffix(parsed.Path, "/") || parsed.RawQuery != "" || parsed.Fragment != "" {
+		return fmt.Errorf("S3 prefix must be in the form s3://bucket/object-prefix/: %q", prefix)
+	}
+	return nil
+}
+
+func isS3Prefix(source string) bool {
+	return strings.HasPrefix(source, "s3://") && strings.HasSuffix(source, "/")
 }
 
 func isProtectedTarget(target string) bool {

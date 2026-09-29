@@ -9,8 +9,10 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
@@ -48,6 +50,20 @@ type S3HeadAPI interface {
 	HeadObject(context.Context, *s3.HeadObjectInput, ...func(*s3.Options)) (*s3.HeadObjectOutput, error)
 }
 
+// S3ListAPI is the AWS SDK surface required for archive discovery.
+type S3ListAPI interface {
+	ListObjectsV2(context.Context, *s3.ListObjectsV2Input, ...func(*s3.Options)) (*s3.ListObjectsV2Output, error)
+}
+
+// ArchiveObject describes a matching archive object discovered below an S3
+// prefix.
+type ArchiveObject struct {
+	Source       string
+	Key          string
+	Size         int64
+	LastModified time.Time
+}
+
 // Diagnosis contains non-sensitive information about an accessible source.
 type Diagnosis struct {
 	Source string
@@ -67,6 +83,72 @@ func Diagnose(ctx context.Context, source string) (Diagnosis, error) {
 		return diagnoseS3(ctx, source, client)
 	}
 	return diagnoseLocal(source)
+}
+
+// List returns .tar.gz archive objects below an S3 prefix without downloading
+// their bodies. Results are ordered newest first, with object-key ordering as
+// the deterministic tie-breaker.
+func List(ctx context.Context, prefix string) ([]ArchiveObject, error) {
+	client, err := newS3Client(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return listS3(ctx, prefix, client)
+}
+
+func listS3(ctx context.Context, prefix string, client S3ListAPI) ([]ArchiveObject, error) {
+	bucket, keyPrefix, err := parseS3Source(prefix)
+	if err != nil {
+		return nil, err
+	}
+
+	objects := make([]ArchiveObject, 0)
+	var continuationToken *string
+	for {
+		output, err := client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
+			Bucket:            aws.String(bucket),
+			Prefix:            aws.String(keyPrefix),
+			ContinuationToken: continuationToken,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("listing S3 prefix %s: %w", prefix, err)
+		}
+		if output == nil {
+			return nil, fmt.Errorf("listing S3 prefix %s: response is missing", prefix)
+		}
+		for _, object := range output.Contents {
+			if object.Key == nil || !strings.HasSuffix(*object.Key, ".tar.gz") {
+				continue
+			}
+			if object.Size == nil || object.LastModified == nil {
+				return nil, fmt.Errorf("listing S3 prefix %s: object metadata is incomplete for %q", prefix, *object.Key)
+			}
+			objects = append(objects, ArchiveObject{
+				Source:       "s3://" + bucket + "/" + *object.Key,
+				Key:          *object.Key,
+				Size:         *object.Size,
+				LastModified: *object.LastModified,
+			})
+		}
+		if !aws.ToBool(output.IsTruncated) {
+			break
+		}
+		if output.NextContinuationToken == nil || *output.NextContinuationToken == "" {
+			return nil, fmt.Errorf("listing S3 prefix %s: truncated response has no continuation token", prefix)
+		}
+		continuationToken = output.NextContinuationToken
+	}
+
+	sort.Slice(objects, func(i, j int) bool {
+		if objects[i].LastModified.Equal(objects[j].LastModified) {
+			return objects[i].Key < objects[j].Key
+		}
+		return objects[i].LastModified.After(objects[j].LastModified)
+	})
+	if len(objects) == 0 {
+		return nil, fmt.Errorf("listing S3 prefix %s: no .tar.gz objects found", prefix)
+	}
+	return objects, nil
 }
 
 func diagnoseLocal(path string) (Diagnosis, error) {

@@ -56,6 +56,8 @@ a target directory into either a plan (no change) or an applied restore
 ```
 Invocation Validation
         ↓
+Source Discovery (optional S3 prefix listing/selection)
+        ↓
 Target Exclusivity Lock
         ↓
 Archive Acquisition (remote or local)
@@ -97,18 +99,27 @@ boundaries.
 ### 1. Invocation Validator
 
 - **Inputs**: The raw parameters of a single invocation (archive source
-  description, target directory, mode, authorization signal, optional
-  staging location, optional integrity-check override).
+  description or S3 prefix selection, target directory, mode, authorization
+  signal, optional staging location, optional integrity-check override).
 - **Outputs**: A validated, normalized invocation description, or an
   explicit rejection naming which parameter failed validation.
 
-### 2. Target Exclusivity Lock
+### 2. Source Discovery
+
+- **Inputs**: A validated S3 prefix and the S3 credentials/configuration
+  supplied through the configured environment variables or AWS SDK default
+  provider chain.
+- **Outputs**: A read-only listing of matching `.tar.gz` objects, or one
+  exact selected object for `--latest`. Selection uses last-modified time and
+  object-key tie-breaking. It never downloads an object body.
+
+### 3. Target Exclusivity Lock
 
 - **Inputs**: The validated target directory.
 - **Outputs**: An acquired-lock handle, or an explicit "already in
   progress" rejection.
 
-### 3. Archive Acquisition
+### 4. Archive Acquisition
 
 - **Inputs**: The validated archive source description (remote location or
   local path) and, when remote, credentials supplied by the configured
@@ -117,31 +128,31 @@ boundaries.
   acquisition failure. A credential-loading failure remains non-sensitive and
   never includes credential values.
 
-### 4. Integrity Verifier
+### 5. Integrity Verifier
 
 - **Inputs**: The acquired archive artifact and the integrity-check
   override setting.
 - **Outputs**: A pass/fail verification result.
 
-### 5. Capacity Checker
+### 6. Capacity Checker
 
 - **Inputs**: The verified archive artifact and the intended staging
   location.
 - **Outputs**: A pass/fail capacity result.
 
-### 6. Staged Extractor
+### 7. Staged Extractor
 
 - **Inputs**: The safety-validated archive artifact and a staging location.
 - **Outputs**: A fully extracted staging directory, or an explicit
   extraction failure.
 
-### 7. Content Safety Validator
+### 8. Content Safety Validator
 
 - **Inputs**: The verified archive artifact.
 - **Outputs**: A pass/fail safety result, itemizing any rejected entries
   by path and reason.
 
-### 8. Restore Planner
+### 9. Restore Planner
 
 - **Inputs**: The safety-validated staged content, a read-only view of the
   current target directory, and the selected mode.
@@ -151,7 +162,7 @@ boundaries.
   should contain afterward. The plan also carries the counts needed for
   reporting.
 
-### 9. Change Application (Reflection)
+### 10. Change Application (Reflection)
 
 - **Inputs**: A change plan produced by the Restore Planner, and an
   explicit authorization signal.
@@ -159,7 +170,7 @@ boundaries.
   confirmation of the number of paths affected, or an explicit application
   failure together with the target directory's recovered state.
 
-### 10. Result Reporter
+### 11. Result Reporter
 
 - **Inputs**: Either a change plan (unauthorized invocation) or the
   outcome of Change Application (authorized invocation), or a failure

@@ -41,6 +41,13 @@ func run(args []string) error {
 		}
 		return runDiagnose(args[1:])
 	}
+	if len(args) > 0 && args[0] == "list" {
+		if len(args) == 2 && isHelpArgument(args[1]) {
+			cli.PrintListUsage(os.Stdout)
+			return nil
+		}
+		return runList(args[1:])
+	}
 	if len(args) == 1 && isHelpArgument(args[0]) {
 		cli.PrintUsage(os.Stdout)
 		return nil
@@ -75,6 +82,25 @@ func runDiagnose(args []string) error {
 	return nil
 }
 
+func runList(args []string) error {
+	invocation, err := cli.ParseList(args)
+	if err != nil {
+		return err
+	}
+	if invocation.EnvFile != "" {
+		if err := config.LoadEnvFile(invocation.EnvFile); err != nil {
+			return reportListFailure(invocation, "environment file", err)
+		}
+	}
+
+	objects, err := source.List(context.Background(), invocation.Source)
+	if err != nil {
+		return reportListFailure(invocation, "source listing", err)
+	}
+	printSourceList(os.Stdout, invocation, objects)
+	return nil
+}
+
 func runRestore(args []string) error {
 	invocation, err := cli.Parse(args)
 	if err != nil {
@@ -84,6 +110,13 @@ func runRestore(args []string) error {
 		if err := config.LoadEnvFile(invocation.EnvFile); err != nil {
 			return reportFailure(invocation, "environment file", "unchanged", err)
 		}
+	}
+	if invocation.Latest {
+		objects, err := source.List(context.Background(), invocation.Source)
+		if err != nil {
+			return reportFailure(invocation, "source selection", "unchanged", err)
+		}
+		invocation.Source = objects[0].Source
 	}
 
 	targetLock, err := lock.Acquire(invocation.Target)
@@ -171,7 +204,19 @@ func printDiagnosis(w io.Writer, diagnosis source.Diagnosis) {
 	_, _ = fmt.Fprintf(w, "source_type: local\nsize: %d\noutcome: readable\n", diagnosis.Size)
 }
 
+func printSourceList(w io.Writer, invocation cli.ListInvocation, objects []source.ArchiveObject) {
+	_, _ = fmt.Fprintf(w, "source: %s\nobjects: %d\n", invocation.Source, len(objects))
+	for _, object := range objects {
+		_, _ = fmt.Fprintf(w, "  key: %s\n  last_modified: %s\n  size: %d\n", object.Key, object.LastModified.Format("2006-01-02T15:04:05Z07:00"), object.Size)
+	}
+}
+
 func reportDiagnosisFailure(invocation cli.DiagnoseInvocation, step string, err error) error {
+	_, _ = fmt.Fprintf(os.Stderr, "source: %s\noutcome: failed\nstep: %s\nerror: %v\n", invocation.Source, step, err)
+	return err
+}
+
+func reportListFailure(invocation cli.ListInvocation, step string, err error) error {
 	_, _ = fmt.Fprintf(os.Stderr, "source: %s\noutcome: failed\nstep: %s\nerror: %v\n", invocation.Source, step, err)
 	return err
 }

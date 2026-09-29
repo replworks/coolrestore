@@ -155,6 +155,18 @@ are complete.
     - Version reporting does not require source, target, credentials, or
       network access.
 
+- [ ] **Task 7.6 — Discover and select S3 backup archives**
+  - **Acceptance Criteria**
+    - Given an S3 prefix, `coolrestore list` reports matching `.tar.gz`
+      objects with their exact keys, last-modified timestamps, and sizes
+      without downloading their bodies or accessing a restore target.
+    - Given an S3 prefix and `--latest`, restore selects the newest matching
+      object by last-modified time, breaks ties by object key, and reports the
+      resolved exact source URI.
+    - A prefix source without `--latest`, a non-prefix source with
+      `--latest`, or a non-S3 prefix source fails before target locking or
+      archive acquisition.
+
 ---
 
 ### Future

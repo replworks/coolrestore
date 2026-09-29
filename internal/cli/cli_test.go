@@ -29,6 +29,30 @@ func TestParseAcceptsValidS3Request(t *testing.T) {
 	}
 }
 
+func TestParseAcceptsLatestS3PrefixRequest(t *testing.T) {
+	invocation, err := Parse([]string{
+		"--source", "s3://backup-bucket/path/",
+		"--latest",
+		"--target", "/tmp/coolrestore-target-does-not-exist",
+	})
+	if err != nil {
+		t.Fatalf("Parse() error = %v", err)
+	}
+	if invocation.Source != "s3://backup-bucket/path/" || !invocation.Latest {
+		t.Fatalf("unexpected invocation: %+v", invocation)
+	}
+}
+
+func TestParseListAcceptsS3Prefix(t *testing.T) {
+	invocation, err := ParseList([]string{"--source", "s3://backup-bucket/path/"})
+	if err != nil {
+		t.Fatalf("ParseList() error = %v", err)
+	}
+	if invocation.Source != "s3://backup-bucket/path/" {
+		t.Fatalf("Source = %q", invocation.Source)
+	}
+}
+
 func TestParseDiagnoseAcceptsSourceAndEnvFileWithoutTarget(t *testing.T) {
 	invocation, err := ParseDiagnose([]string{
 		"--source", "s3://backup-bucket/path/backup.tar.gz",
@@ -66,6 +90,10 @@ func TestParseRejectsInvalidRequests(t *testing.T) {
 		{name: "root target", args: []string{"--source", "/tmp/archive.tar.gz", "--target", "/"}},
 		{name: "malformed S3 URI", args: []string{"--source", "s3://bucket", "--target", "/tmp/target"}},
 		{name: "S3 query", args: []string{"--source", "s3://bucket/key?x=1", "--target", "/tmp/target"}},
+		{name: "prefix without latest", args: []string{"--source", "s3://bucket/path/", "--target", "/tmp/target"}},
+		{name: "latest without prefix", args: []string{"--source", "/tmp/archive.tar.gz", "--latest", "--target", "/tmp/target"}},
+		{name: "non-S3 prefix", args: []string{"--source", "/tmp/path/", "--latest", "--target", "/tmp/target"}},
+		{name: "prefix without trailing slash", args: []string{"--source", "s3://bucket/path", "--latest", "--target", "/tmp/target"}},
 	}
 
 	for _, test := range tests {

@@ -11,6 +11,10 @@ overwritten can be brought back exactly as they existed in the backup.
 The product also provides a read-only `diagnose` command so an operator can
 verify source connectivity and access before attempting a restore.
 
+The product also provides a read-only `list` command for discovering archive
+objects below an S3 prefix, and can select the newest matching archive for a
+restore.
+
 The product provides `--version` to report the installed binary version
 without accessing any source or target.
 
@@ -46,6 +50,9 @@ cannot be trusted to be well-formed.
 - **Archive source**: supplied once through `--source`, using either
   - an S3 URI in the form `s3://bucket/object-key`, or
   - an absolute path to a local archive file already present on disk.
+- **Optional S3 archive prefix**: supplied as an S3 `--source` ending in `/`
+  for read-only listing, or together with `--latest` to select the newest
+  `.tar.gz` object for a restore. An exact object source does not end in `/`.
 - **Archive format**: a gzip-compressed tar archive (`.tar.gz`).
 - **Target directory**: an absolute path on the local filesystem where the
   archive's contents should be restored.
@@ -79,6 +86,8 @@ cannot be trusted to be well-formed.
   credential value.
 - A **process exit status** indicating success or failure, suitable for
   use in automated scripts.
+- A **source listing report**, produced by `list`, describing matching S3
+  archive objects, their last-modified timestamps, and their sizes.
 
 ## Functional Requirements
 
@@ -166,6 +175,17 @@ cannot be trusted to be well-formed.
 20. When invoked as `coolrestore --version`, the product must print the
     product name and build version, exit successfully, and access no local or
     remote restore resource.
+21. The `list` command must be read-only, require an S3 `--source` ending in
+    `/`, and list only `.tar.gz` objects below that prefix using their S3 object key,
+    last-modified timestamp, and size. It must not require or access a
+    restore target.
+22. A restore may use an S3 `--source` ending in `/` with `--latest` to
+    select the newest `.tar.gz` object below the prefix. Selection must use
+    S3 last-modified time, break ties by object key in ascending order, and
+    resolve to one exact object before archive acquisition.
+23. An S3 `--source` ending in `/` must require `--latest` for a restore, and
+    `--latest` must require such a prefix source. A selected object's exact
+    S3 URI must appear in the plan, result, or failure report.
 
 ## User Flows
 
@@ -178,6 +198,23 @@ cannot be trusted to be well-formed.
    specified object without downloading its body. For a local source, product
    checks that the archive is a readable regular file.
 4. Product reports the source diagnosis without changing any target.
+
+### Flow 0a — List archives below an S3 prefix
+
+1. Operator specifies an S3 prefix and, when needed, an explicit S3
+   environment file.
+2. Product validates the prefix and loads the selected environment file.
+3. Product lists matching `.tar.gz` objects without downloading their bodies.
+4. Product reports each object's exact key, last-modified timestamp, and size.
+
+### Flow 0b — Select the newest archive below an S3 prefix
+
+1. Operator specifies an S3 prefix, `--latest`, a target directory, and any
+   restore options.
+2. Product lists matching `.tar.gz` objects and selects the newest one by
+   last-modified time, with object-key tie-breaking.
+3. Product continues the normal restore flow using the selected exact object
+   URI and reports that URI.
 
 ### Flow 1 — Preview a restore (default)
 
@@ -236,6 +273,9 @@ cannot be trusted to be well-formed.
 - Insufficient available space to complete the restore.
 - A restore is already in progress for the same target directory.
 - The archive source cannot be reached or read (e.g. S3 access failure).
+- The S3 prefix is invalid, inaccessible, or contains no `.tar.gz` objects.
+- `--latest` is missing its required trailing-slash S3 prefix source, or a
+  prefix source is used without `--latest`.
 - A confirmed restore fails partway through applying changes to the
   target directory.
 
@@ -282,6 +322,10 @@ rollback defined in requirement 12.
 - Given a successful restore, the reported file count matches the number
   of files actually present in the target directory that originated from
   the archive.
+- Given an S3 prefix containing multiple `.tar.gz` objects, `list` reports
+  their keys, timestamps, and sizes without downloading archive bodies.
+- Given an S3 prefix source and `--latest`, the newest matching object is
+  selected deterministically and its exact URI appears in the restore report.
 
 ## Success Criteria
 

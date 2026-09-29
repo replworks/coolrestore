@@ -63,6 +63,20 @@ func TestRustFSE2E(t *testing.T) {
 	}); err != nil {
 		t.Fatalf("PutObject() error = %v", err)
 	}
+	if _, err := client.PutObject(ctx, &s3.PutObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String("backups/readme.txt"),
+		Body:   strings.NewReader("not an archive"),
+	}); err != nil {
+		t.Fatalf("PutObject() error = %v", err)
+	}
+	objects, err := List(ctx, "s3://"+bucket+"/backups/")
+	if err != nil {
+		t.Fatalf("List() error = %v", err)
+	}
+	if len(objects) != 1 || objects[0].Source != "s3://"+bucket+"/"+key || objects[0].Size != int64(len(want)) {
+		t.Fatalf("unexpected listed objects: %+v", objects)
+	}
 	diagnosis, err := Diagnose(ctx, "s3://"+bucket+"/"+key)
 	if err != nil {
 		t.Fatalf("Diagnose() error = %v", err)

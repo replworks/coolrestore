@@ -7,8 +7,11 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
 
 func TestAcquireLocalUsesExistingFileWithoutRemoteAccess(t *testing.T) {
@@ -85,6 +88,40 @@ func TestDiagnoseS3RejectsHeadObjectFailure(t *testing.T) {
 	}
 }
 
+func TestListS3FiltersAndSortsArchives(t *testing.T) {
+	older := time.Date(2026, 9, 28, 0, 0, 0, 0, time.UTC)
+	newer := older.Add(24 * time.Hour)
+	client := &fakeS3Client{listOutputs: []*s3.ListObjectsV2Output{{
+		Contents: []types.Object{
+			{Key: aws.String("backups/older.tar.gz"), Size: aws.Int64(10), LastModified: &older},
+			{Key: aws.String("backups/readme.txt"), Size: aws.Int64(20), LastModified: &newer},
+			{Key: aws.String("backups/newer.tar.gz"), Size: aws.Int64(30), LastModified: &newer},
+		},
+	}}}
+
+	objects, err := listS3(context.Background(), "s3://bucket/backups/", client)
+	if err != nil {
+		t.Fatalf("listS3() error = %v", err)
+	}
+	if len(objects) != 2 {
+		t.Fatalf("listed objects = %d, want 2", len(objects))
+	}
+	if objects[0].Source != "s3://bucket/backups/newer.tar.gz" || objects[0].Key != "backups/newer.tar.gz" {
+		t.Fatalf("newest object = %+v", objects[0])
+	}
+	if objects[1].Key != "backups/older.tar.gz" {
+		t.Fatalf("second object = %+v", objects[1])
+	}
+}
+
+func TestListS3RejectsEmptyArchivePrefix(t *testing.T) {
+	client := &fakeS3Client{listOutputs: []*s3.ListObjectsV2Output{{}}}
+	_, err := listS3(context.Background(), "s3://bucket/backups/", client)
+	if err == nil || !strings.Contains(err.Error(), "no .tar.gz objects found") {
+		t.Fatalf("listS3() error = %v", err)
+	}
+}
+
 func TestParseS3Source(t *testing.T) {
 	tests := []struct {
 		input  string
@@ -154,6 +191,9 @@ type fakeS3Client struct {
 	headErr       error
 	headCalls     int
 	getCalls      int
+	listOutputs   []*s3.ListObjectsV2Output
+	listErr       error
+	listCalls     int
 }
 
 func (client *fakeS3Client) GetObject(context.Context, *s3.GetObjectInput, ...func(*s3.Options)) (*s3.GetObjectOutput, error) {
@@ -178,4 +218,17 @@ func (client *fakeS3Client) HeadObject(context.Context, *s3.HeadObjectInput, ...
 	}
 	size := client.headSize
 	return &s3.HeadObjectOutput{ContentLength: &size}, nil
+}
+
+func (client *fakeS3Client) ListObjectsV2(context.Context, *s3.ListObjectsV2Input, ...func(*s3.Options)) (*s3.ListObjectsV2Output, error) {
+	client.listCalls++
+	if client.listErr != nil {
+		return nil, client.listErr
+	}
+	if len(client.listOutputs) == 0 {
+		return &s3.ListObjectsV2Output{}, nil
+	}
+	output := client.listOutputs[0]
+	client.listOutputs = client.listOutputs[1:]
+	return output, nil
 }
