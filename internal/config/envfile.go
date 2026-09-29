@@ -26,11 +26,14 @@ func LoadEnvFile(path string) error {
 	if err != nil {
 		return fmt.Errorf("opening %q: %w", path, err)
 	}
-	defer file.Close()
 
 	values, err := parseEnvFile(file)
+	closeErr := file.Close()
 	if err != nil {
 		return fmt.Errorf("parsing %q: %w", path, err)
+	}
+	if closeErr != nil {
+		return fmt.Errorf("closing %q: %w", path, closeErr)
 	}
 	for key, value := range values {
 		if err := os.Setenv(key, value); err != nil {
