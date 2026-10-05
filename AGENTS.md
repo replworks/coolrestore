@@ -3,10 +3,10 @@
 ## DOCUMENT_ORDER
 
 1. AGENTS.md
-2. PRODUCT_SPEC.md
-3. ARCHITECTURE.md
-4. FRAMEWORK.md
-5. TASKS.md
+2. .replworks/PRODUCT_SPEC.md
+3. .replworks/TECH_STACK.md
+4. .replworks/ARCHITECTURE.md
+5. .replworks/TASKS.md
    Only these documents are authoritative.
 
 ---
@@ -16,11 +16,11 @@
 Ignore all files under:
 
 ```text
-docs/
+.replworks/docs/
 ```
 
-Never use files in docs/ as requirements.
-Never implement features described only in docs/.
+Never use files in .replworks/docs/ as requirements.
+Never implement features described only in .replworks/docs/.
 
 ---
 
@@ -32,16 +32,16 @@ Product Requirements:
 PRODUCT_SPEC.md
 ```
 
+Implementation Constraints:
+
+```text
+TECH_STACK.md
+```
+
 Architecture:
 
 ```text
 ARCHITECTURE.md
-```
-
-Implementation Constraints:
-
-```text
-FRAMEWORK.md
 ```
 
 Execution Plan:
@@ -55,9 +55,9 @@ If a conflict exists:
 ```text
 PRODUCT_SPEC.md
 >
-ARCHITECTURE.md
+TECH_STACK.md
 >
-FRAMEWORK.md
+ARCHITECTURE.md
 >
 TASKS.md
 >
@@ -75,16 +75,16 @@ What the product is.
 What the product does.
 ```
 
+TECH_STACK.md defines:
+
+```text
+How the product must be implemented.
+```
+
 ARCHITECTURE.md defines:
 
 ```text
 How the product works.
-```
-
-FRAMEWORK.md defines:
-
-```text
-How the product must be implemented.
 ```
 
 TASKS.md defines:
@@ -133,8 +133,8 @@ PRODUCT_SPEC.md
 Implementation must follow:
 
 ```text
+TECH_STACK.md
 ARCHITECTURE.md
-FRAMEWORK.md
 ```
 
 ---
@@ -144,15 +144,16 @@ FRAMEWORK.md
 For every task:
 
 1. Read PRODUCT_SPEC.md
-2. Read ARCHITECTURE.md
-3. Read FRAMEWORK.md
+2. Read TECH_STACK.md
+3. Read ARCHITECTURE.md
 4. Read task definition
 5. If the task touches a domain not covered by verified knowledge in PRODUCT_SPEC.md or ARCHITECTURE.md: stop. Mark the relevant section UNVERIFIED. Do not implement against an UNVERIFIED section. Require explicit human confirmation before continuing.
 6. Implement
 7. Write unit tests for internal logic
 8. If the task touches an EXTERNAL_BOUNDARY: write an E2E test against the live boundary. A mocked test alone does not satisfy this step.
 9. Run all tests
-10. Stop
+10. Mark the completed task `[X]` in TASKS.md
+11. Stop
     Do not start another task automatically.
 
 ---
@@ -180,7 +181,7 @@ Re-verify mocks when the external system's behavior may have changed.
 
 ---
 
-## PRODUCT_CHANGES
+## PRODUCT_SPEC_CHANGES
 
 If implementation reveals missing product requirements, or a PRODUCT_SPEC.md section is marked UNVERIFIED:
 
@@ -193,6 +194,16 @@ Update PRODUCT_SPEC.md, and clear the UNVERIFIED mark only after human confirmat
 
 ---
 
+## TECH_STACK_CHANGES
+
+If implementation requires tech stack changes:
+
+1. Update TECH_STACK.md
+2. Update implementation
+   Never allow tech stack and code to diverge.
+
+---
+
 ## ARCHITECTURE_CHANGES
 
 If implementation requires architecture changes, or an ARCHITECTURE.md section is marked UNVERIFIED:
@@ -201,16 +212,6 @@ If implementation requires architecture changes, or an ARCHITECTURE.md section i
 2. Clear the UNVERIFIED mark only after human confirmation
 3. Update implementation
    Never allow architecture and code to diverge.
-
----
-
-## FRAMEWORK_CHANGES
-
-If implementation requires framework changes:
-
-1. Update FRAMEWORK.md
-2. Update implementation
-   Never allow framework and code to diverge.
 
 ---
 
@@ -254,7 +255,7 @@ Task is complete only when:
 
 - product requirements satisfied
 - architectural requirements satisfied
-- framework constraints satisfied
+- tech stack constraints satisfied
 - acceptance criteria satisfied
 - no UNVERIFIED sections remain in scope for this task
 - code runs

@@ -68,7 +68,7 @@ cannot be trusted to be well-formed.
   not selected implicitly from the current directory.
 - **S3 access information**: supplied only through the environment variables
   loaded from the optional environment file, the process environment, or the
-  AWS SDK default credential provider chain defined in FRAMEWORK.md, never as
+  AWS SDK default credential provider chain defined in TECH_STACK.md, never as
   direct credential input.
 
 ## Outputs
@@ -114,7 +114,7 @@ cannot be trusted to be well-formed.
 6. The product must refuse to treat the following target directories as
    valid restore targets: an empty value, any filesystem root, and the
    well-known system-critical directories defined for the supported
-   operating systems in FRAMEWORK.md. `/tmp` and its children are not
+   operating systems in TECH_STACK.md. `/tmp` and its children are not
    system-critical targets by this rule.
 7. The product must verify the archive's integrity before restoring any of
    its contents, unless the operator explicitly opts out of this check.
