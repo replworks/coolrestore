@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>coolrestore — Safe Infrastructure & Coolify Storage Recovery</title>
+  <meta name="description" content="Safe, preview-first storage recovery CLI for Coolify archives stored in S3-compatible systems or local disks. Features atomic rollback and zero-leakage security.">
+  <meta name="theme-color" content="#09090b">
+
+  <!-- Tailwind CSS v4 CDN -->
+  <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    code, kbd, samp, pre, .font-mono {
+      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    /* Subtle dot grid pattern */
+    .bg-grid-pattern {
+      background-size: 32px 32px;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      height: 6px;
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #18181b;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #3f3f46;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body class="bg-neutral-950 text-neutral-100 antialiased selection:bg-neutral-800 selection:text-white min-h-screen flex flex-col">
+
+  <!-- TOP ANNOUNCEMENT BANNER -->
+  <aside aria-label="Release Notice" class="border-b border-neutral-800 bg-neutral-900/60 backdrop-blur px-4 py-2 text-center text-xs text-neutral-400">
+    <span>Production-ready backup restoration for Coolify &amp; S3 storage.</span>
+    <a href="#quickstart" class="ml-2 font-medium text-white underline underline-offset-4 hover:text-neutral-300">
+      Install v1.0 &rarr;
+    </a>
+  </aside>
+
+  <!-- NAVIGATION -->
+  <header class="sticky top-0 z-50 border-b border-neutral-800/80 bg-neutral-950/80 backdrop-blur-md">
+    <div class="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8 h-16">
+      <!-- Logo -->
+      <a href="#" class="flex items-center gap-3 group">
+        <div class="flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-700 bg-neutral-900 group-hover:border-neutral-500 transition-colors">
+          <svg class="h-5 w-5 text-neutral-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+          </svg>
+        </div>
+        <div class="flex flex-col">
+          <span class="text-sm font-bold tracking-tight text-white flex items-center gap-1.5">
+            coolrestore
+            <span class="rounded bg-neutral-800 px-1.5 py-0.5 text-[10px] font-mono text-neutral-400 border border-neutral-700">CLI</span>
+          </span>
+          <span class="text-[11px] text-neutral-400">by Replworks</span>
+        </div>
+      </a>
+
+      <!-- Desktop Nav -->
+      <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-neutral-400">
+        <a href="#features" class="hover:text-white transition-colors">Features</a>
+        <a href="#safety" class="hover:text-white transition-colors">Safety Guarantees</a>
+        <a href="#demo" class="hover:text-white transition-colors">Interactive Demo</a>
+        <a href="#workflow" class="hover:text-white transition-colors">Architecture</a>
+        <a href="#quickstart" class="hover:text-white transition-colors">Installation</a>
+        <a href="#commands" class="hover:text-white transition-colors">Commands</a>
+      </nav>
+
+      <!-- External Links & CTA -->
+      <div class="flex items-center gap-3">
+        <a href="https://github.com/replworks/coolrestore" target="_blank" rel="noopener noreferrer" 
+           class="hidden sm:flex items-center gap-2 rounded-lg border border-neutral-800 bg-neutral-900/80 px-3.5 py-1.5 text-xs font-medium text-neutral-200 hover:border-neutral-700 hover:bg-neutral-850 hover:text-white transition-all">
+          <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+          </svg>
+          <span>GitHub</span>
+        </a>
+        <a href="#quickstart" class="rounded-lg bg-neutral-100 px-3.5 py-1.5 text-xs font-semibold text-neutral-900 hover:bg-white hover:shadow transition-all">
+          Get Started
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1">
+    <!-- HERO SECTION -->
+    <section class="relative overflow-hidden border-b border-neutral-800 bg-neutral-950 py-20 sm:py-28">
+      <div class="absolute inset-0 bg-grid-pattern opacity-40 pointer-events-none"></div>
+      <div class="absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-neutral-800/20 blur-[120px] pointer-events-none rounded-full"></div>
+
+      <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
+        <!-- Badge -->
+        <div class="inline-flex items-center gap-2 rounded-full border border-neutral-700/80 bg-neutral-900/90 px-3.5 py-1 text-xs text-neutral-300 shadow-sm backdrop-blur mb-8">
+          <span class="inline-block h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span class="font-medium">Infrastructure Recovery CLI</span>
+          <span class="text-neutral-500">|</span>
+          <span class="text-neutral-400">Preview-first &amp; Atomic</span>
+        </div>
+
+        <!-- Headline -->
+        <h1 class="mx-auto max-w-4xl text-4xl font-extrabold tracking-tight text-white sm:text-6xl sm:leading-[1.15]">
+          Restore Coolify storage safely <br class="hidden sm:inline">after an incident.
+        </h1>
+
+        <!-- Subheading -->
+        <p class="mx-auto mt-6 max-w-2xl text-base sm:text-lg text-neutral-400 leading-relaxed">
+          Preview changes before touching the disk. Apply only with explicit confirmation. Built for S3-compatible storage with isolated staging, traversal rejection, and atomic replace rollback.
+        </p>
+
+        <!-- CTA Buttons -->
+        <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
+          <a href="#quickstart" class="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-5 py-3 text-sm font-semibold text-neutral-950 hover:bg-neutral-200 transition-all shadow-sm">
+            <span>Install Binary</span>
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+            </svg>
+          </a>
+          <a href="#demo" class="inline-flex items-center justify-center gap-2 rounded-lg border border-neutral-800 bg-neutral-900/80 px-5 py-3 text-sm font-medium text-neutral-200 hover:border-neutral-700 hover:bg-neutral-800 transition-all">
+            <span>Explore Commands</span>
+            <svg class="h-4 w-4 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </a>
+        </div>
+
+        <!-- Quick Terminal Command Bar -->
+        <div class="mx-auto mt-10 max-w-lg">
+          <div class="relative flex items-center justify-between rounded-xl border border-neutral-800 bg-neutral-900/90 px-4 py-3 font-mono text-xs text-neutral-300 shadow-2xl backdrop-blur">
+            <div class="flex items-center gap-2 overflow-x-auto custom-scrollbar whitespace-nowrap">
+              <span class="text-neutral-500 select-none">$</span>
+              <span class="text-neutral-200">brew install --cask coolrestore</span>
+            </div>
+            <button onclick="copyToClipboard('brew install --cask coolrestore', this)" 
+                    class="ml-3 flex items-center gap-1 rounded bg-neutral-800 px-2.5 py-1 text-[11px] font-sans font-medium text-neutral-300 hover:bg-neutral-700 hover:text-white transition-all shrink-0">
+              <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              <span>Copy</span>
+            </button>
+          </div>
+          <p class="mt-2 text-xs text-neutral-500">Available via Homebrew, APT, statically linked binaries, or Go.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- KEY VALUE METRICS / PILLARS -->
+    <section class="border-b border-neutral-800 bg-neutral-900/30 py-8">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
+          <div class="border-l border-neutral-800 pl-4 py-1">
+            <div class="text-2xl font-bold font-mono text-white">Plan-First</div>
+            <div class="text-xs text-neutral-400 mt-1">Default runs never touch disk</div>
+          </div>
+          <div class="border-l border-neutral-800 pl-4 py-1">
+            <div class="text-2xl font-bold font-mono text-white">Atomic</div>
+            <div class="text-xs text-neutral-400 mt-1">Filesystem rename &amp; rollback</div>
+          </div>
+          <div class="border-l border-neutral-800 pl-4 py-1">
+            <div class="text-2xl font-bold font-mono text-white">S3 Native</div>
+            <div class="text-xs text-neutral-400 mt-1">RustFS, MinIO, AWS S3 compatible</div>
+          </div>
+          <div class="border-l border-neutral-800 pl-4 py-1">
+            <div class="text-2xl font-bold font-mono text-white">0 Leaks</div>
+            <div class="text-xs text-neutral-400 mt-1">Zero credential exposure in logs</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- INTERACTIVE TERMINAL SHOWCASE -->
+    <section id="demo" class="border-b border-neutral-800 py-16 sm:py-24 bg-neutral-950">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col md:flex-row md:items-end md:justify-between mb-8">
+          <div>
+            <div class="text-xs font-mono font-semibold uppercase tracking-wider text-neutral-400">Live Demonstration</div>
+            <h2 class="mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-white">Predictable, transparent operations</h2>
+          </div>
+          <p class="mt-2 md:mt-0 text-sm text-neutral-400 max-w-md">
+            Inspect outputs before executing changes. Every step produces deterministic status codes and structured output.
+          </p>
+        </div>
+
+        <!-- Terminal Window Frame -->
+        <div class="rounded-2xl border border-neutral-800 bg-neutral-900/90 shadow-2xl overflow-hidden">
+          <!-- Terminal Titlebar -->
+          <div class="flex flex-wrap items-center justify-between border-b border-neutral-800 px-4 py-3 bg-neutral-900 gap-3">
+            <div class="flex items-center gap-2">
+              <span class="h-3 w-3 rounded-full bg-neutral-700"></span>
+              <span class="h-3 w-3 rounded-full bg-neutral-700"></span>
+              <span class="h-3 w-3 rounded-full bg-neutral-700"></span>
+              <span class="ml-2 font-mono text-xs text-neutral-400">coolrestore-terminal ~ v1.0.0</span>
+            </div>
+
+            <!-- Tab Switcher -->
+            <div class="flex items-center gap-1 rounded-lg border border-neutral-800 bg-neutral-950/80 p-1 text-xs font-mono">
+              <button onclick="switchTab('tab-preview', this)" class="demo-tab active-tab rounded px-2.5 py-1 text-white bg-neutral-800 transition-colors">1. Preview (Default)</button>
+              <button onclick="switchTab('tab-merge', this)" class="demo-tab rounded px-2.5 py-1 text-neutral-400 hover:text-neutral-200 transition-colors">2. Merge Restore</button>
+              <button onclick="switchTab('tab-replace', this)" class="demo-tab rounded px-2.5 py-1 text-neutral-400 hover:text-neutral-200 transition-colors">3. Atomic Replace</button>
+              <button onclick="switchTab('tab-diagnose', this)" class="demo-tab rounded px-2.5 py-1 text-neutral-400 hover:text-neutral-200 transition-colors">4. Diagnose</button>
+              <button onclick="switchTab('tab-list', this)" class="demo-tab rounded px-2.5 py-1 text-neutral-400 hover:text-neutral-200 transition-colors">5. S3 List</button>
+            </div>
+          </div>
+
+          <!-- Tab Contents -->
+          <div class="p-5 sm:p-6 font-mono text-xs sm:text-sm text-neutral-300 overflow-x-auto custom-scrollbar">
+            <!-- TAB 1: Preview -->
+            <div id="tab-preview" class="demo-content space-y-4">
+              <div class="flex items-start justify-between gap-4">
+                <p class="text-neutral-500"># Preview a restore from S3. By default, no target files are created or modified.</p>
+                <button onclick="copyToClipboard('coolrestore --env-file ./coolrestore.env --source s3://coolify-backups/storage/2026-09-26.tar.gz --target /var/lib/coolify/storage', this)" class="shrink-0 text-neutral-500 hover:text-white text-xs">Copy</button>
+              </div>
+              <div class="text-emerald-400 font-semibold">$ coolrestore --env-file ./coolrestore.env --source s3://coolify-backups/storage/2026-09-26.tar.gz --target /var/lib/coolify/storage</div>
+              <div class="border-l-2 border-neutral-700 pl-4 space-y-1 text-neutral-300 py-1">
+                <div><span class="text-neutral-500">source:</span> s3://coolify-backups/storage/2026-09-26.tar.gz</div>
+                <div><span class="text-neutral-500">target:</span> /var/lib/coolify/storage</div>
+                <div><span class="text-neutral-500">mode:</span> merge</div>
+                <div><span class="text-neutral-500">outcome:</span> <span class="text-amber-400 font-bold">planned</span></div>
+                <div><span class="text-neutral-500">regular_files:</span> 2</div>
+                <div><span class="text-neutral-500">added:</span></div>
+                <div class="text-neutral-400 pl-4">+ uploads/avatar.png</div>
+                <div><span class="text-neutral-500">overwritten:</span></div>
+                <div class="text-neutral-400 pl-4">~ config/app.php</div>
+              </div>
+              <p class="text-xs text-neutral-500">Notice: Target directory remains untouched. Use <span class="text-neutral-300">--confirm</span> to apply this plan.</p>
+            </div>
+
+            <!-- TAB 2: Merge Restore -->
+            <div id="tab-merge" class="demo-content hidden space-y-4">
+              <div class="flex items-start justify-between gap-4">
+                <p class="text-neutral-500"># Apply merge restore with explicit confirmation. Preserves files existing only in target.</p>
+                <button onclick="copyToClipboard('coolrestore --env-file ./coolrestore.env --source s3://coolify-backups/storage/2026-09-26.tar.gz --target /var/lib/coolify/storage --mode merge --confirm', this)" class="shrink-0 text-neutral-500 hover:text-white text-xs">Copy</button>
+              </div>
+              <div class="text-emerald-400 font-semibold">$ coolrestore --env-file ./coolrestore.env --source s3://coolify-backups/storage/2026-09-26.tar.gz --target /var/lib/coolify/storage --mode merge --confirm</div>
+              <div class="border-l-2 border-emerald-600/70 pl-4 space-y-1 text-neutral-300 py-1">
+                <div><span class="text-neutral-500">source:</span> s3://coolify-backups/storage/2026-09-26.tar.gz</div>
+                <div><span class="text-neutral-500">target:</span> /var/lib/coolify/storage</div>
+                <div><span class="text-neutral-500">mode:</span> merge</div>
+                <div><span class="text-neutral-500">outcome:</span> <span class="text-emerald-400 font-bold">restored</span></div>
+                <div><span class="text-neutral-500">regular_files:</span> 2</div>
+              </div>
+              <p class="text-xs text-neutral-500">Exit code: 0. Safe merge completed successfully.</p>
+            </div>
+
+            <!-- TAB 3: Atomic Replace -->
+            <div id="tab-replace" class="demo-content hidden space-y-4">
+              <div class="flex items-start justify-between gap-4">
+                <p class="text-neutral-500"># Replace mode ensures the target contains ONLY the archive contents. Rollback on failure.</p>
+                <button onclick="copyToClipboard('coolrestore --env-file ./coolrestore.env --source s3://coolify-backups/storage/2026-09-26.tar.gz --target /var/lib/coolify/storage --mode replace --confirm', this)" class="shrink-0 text-neutral-500 hover:text-white text-xs">Copy</button>
+              </div>
+              <div class="text-emerald-400 font-semibold">$ coolrestore --env-file ./coolrestore.env --source s3://coolify-backups/storage/2026-09-26.tar.gz --target /var/lib/coolify/storage --mode replace --confirm</div>
+              <div class="border-l-2 border-cyan-600/70 pl-4 space-y-1 text-neutral-300 py-1">
+                <div><span class="text-neutral-500">source:</span> s3://coolify-backups/storage/2026-09-26.tar.gz</div>
+                <div><span class="text-neutral-500">target:</span> /var/lib/coolify/storage</div>
+                <div><span class="text-neutral-500">mode:</span> replace</div>
+                <div><span class="text-neutral-500">outcome:</span> <span class="text-emerald-400 font-bold">restored</span></div>
+                <div><span class="text-neutral-500">regular_files:</span> 48</div>
+              </div>
+              <p class="text-xs text-neutral-500">Atomic swap verified. Previous directory safely dismantled without intermediate partial states.</p>
+            </div>
+
+            <!-- TAB 4: Diagnose -->
+            <div id="tab-diagnose" class="demo-content hidden space-y-4">
+              <div class="flex items-start justify-between gap-4">
+                <p class="text-neutral-500"># Read-only check: verifies credentials, endpoints, and object reachability without downloading body.</p>
+                <button onclick="copyToClipboard('coolrestore diagnose --env-file ./coolrestore.env --source s3://coolify-bucket/data/coolify/backups/volumes/app/ --latest', this)" class="shrink-0 text-neutral-500 hover:text-white text-xs">Copy</button>
+              </div>
+              <div class="text-emerald-400 font-semibold">$ coolrestore diagnose --env-file ./coolrestore.env --source 's3://coolify-bucket/data/coolify/backups/volumes/replworks-team-0/wjpmbrff7txw1hqtwu4jb4xb/' --latest</div>
+              <div class="border-l-2 border-neutral-700 pl-4 space-y-1 text-neutral-300 py-1">
+                <div><span class="text-neutral-500">status:</span> <span class="text-emerald-400 font-bold">reachable</span></div>
+                <div><span class="text-neutral-500">selected_object:</span> s3://coolify-bucket/.../directory-datawifinotestorage-1790266116.tar.gz</div>
+                <div><span class="text-neutral-500">size_bytes:</span> 3418920</div>
+                <div><span class="text-neutral-500">last_modified:</span> 2026-10-18T14:22:09Z</div>
+                <div><span class="text-neutral-500">credentials:</span> valid (AWS default chain / env)</div>
+              </div>
+              <p class="text-xs text-neutral-500">Safe: Zero bytes of payload downloaded. No restore target required.</p>
+            </div>
+
+            <!-- TAB 5: S3 List -->
+            <div id="tab-list" class="demo-content hidden space-y-4">
+              <div class="flex items-start justify-between gap-4">
+                <p class="text-neutral-500"># List all matching .tar.gz archives below an S3 prefix without touching any local directory.</p>
+                <button onclick="copyToClipboard('coolrestore list --env-file ./coolrestore.env --source s3://coolify-bucket/backups/', this)" class="shrink-0 text-neutral-500 hover:text-white text-xs">Copy</button>
+              </div>
+              <div class="text-emerald-400 font-semibold">$ coolrestore list --env-file ./coolrestore.env --source 's3://coolify-bucket/data/coolify/backups/volumes/replworks-team-0/wjpmbrff7txw1hqtwu4jb4xb/'</div>
+              <div class="border-l-2 border-neutral-700 pl-4 space-y-1 text-neutral-300 py-1">
+                <div>2026-10-18T14:22:09Z   3.4 MB   directory-datawifinotestorage-1790266116.tar.gz  <span class="text-cyan-400">[NEWEST]</span></div>
+                <div>2026-10-17T14:22:05Z   3.2 MB   directory-datawifinotestorage-1790179725.tar.gz</div>
+                <div>2026-10-16T14:22:11Z   3.1 MB   directory-datawifinotestorage-1790093331.tar.gz</div>
+              </div>
+              <p class="text-xs text-neutral-500">Tip: Combine with <span class="text-neutral-300">--latest</span> to restore the newest archive automatically.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SAFETY GUARANTEES (THE CORE ENGINE) -->
+    <section id="safety" class="border-b border-neutral-800 py-20 bg-neutral-900/20">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="max-w-3xl">
+          <div class="text-xs font-mono font-semibold uppercase tracking-wider text-neutral-400">Security Architecture</div>
+          <h2 class="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">Engineered for worst-case resilience</h2>
+          <p class="mt-4 text-base text-neutral-400">
+            Storage recovery is typically executed during high-stress incidents. coolrestore is built with strict defensive constraints to eliminate human error and corrupted archive propagation.
+          </p>
+        </div>
+
+        <div class="mt-12 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <!-- Card 1 -->
+          <div class="rounded-xl border border-neutral-800 bg-neutral-900/60 p-6 hover:border-neutral-700 transition-colors">
+            <div class="flex h-10 w-10 items-center justify-center rounded-lg border border-neutral-700 bg-neutral-800 text-neutral-200 mb-4">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+            </div>
+            <h3 class="text-base font-semibold text-white">Safe by Default (Preview Plan)</h3>
+            <p class="mt-2 text-sm text-neutral-400 leading-relaxed">
+              Without the explicit <code class="font-mono text-neutral-300">--confirm</code> flag, coolrestore never touches or creates target files. It calculates differences, validates safety, and prints a precise dry-run plan.
+            </p>
+          </div>
+
+          <!-- Card 2 -->
+          <div class="rounded-xl border border-neutral-800 bg-neutral-900/60 p-6 hover:border-neutral-700 transition-colors">
+            <div class="flex h-10 w-10 items-center justify-center rounded-lg border border-neutral-700 bg-neutral-800 text-neutral-200 mb-4">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </div>
+            <h3 class="text-base font-semibold text-white">Atomic Replace Rollback</h3>
+            <p class="mt-2 text-sm text-neutral-400 leading-relaxed">
+              In <code class="font-mono text-neutral-300">replace</code> mode, the staging directory is switched atomically via filesystem renames. If anything fails mid-switch, prior state is restored without leaving partial changes.
+            </p>
+          </div>
+
+          <!-- Card 3 -->
+          <div class="rounded-xl border border-neutral-800 bg-neutral-900/60 p-6 hover:border-neutral-700 transition-colors">
+            <div class="flex h-10 w-10 items-center justify-center rounded-lg border border-neutral-700 bg-neutral-800 text-neutral-200 mb-4">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <h3 class="text-base font-semibold text-white">Target Concurrency Lock</h3>
+            <p class="mt-2 text-sm text-neutral-400 leading-relaxed">
+              A robust target lock prevents simultaneous restore operations on the same directory. Any concurrent attempt is aborted immediately to avoid race conditions and corruption.
+            </p>
+          </div>
+
+          <!-- Card 4 -->
+          <div class="rounded-xl border border-neutral-800 bg-neutral-900/60 p-6 hover:border-neutral-700 transition-colors">
+            <div class="flex h-10 w-10 items-center justify-center rounded-lg border border-neutral-700 bg-neutral-800 text-neutral-200 mb-4">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+              </svg>
+            </div>
+            <h3 class="text-base font-semibold text-white">Strict Traversal Rejection</h3>
+            <p class="mt-2 text-sm text-neutral-400 leading-relaxed">
+              Archives containing <code class="font-mono text-neutral-300">../</code> path traversal, escaping symlinks, hard links, or disallowed file types are rejected completely before any target modification.
+            </p>
+          </div>
+
+          <!-- Card 5 -->
+          <div class="rounded-xl border border-neutral-800 bg-neutral-900/60 p-6 hover:border-neutral-700 transition-colors">
+            <div class="flex h-10 w-10 items-center justify-center rounded-lg border border-neutral-700 bg-neutral-800 text-neutral-200 mb-4">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+              </svg>
+            </div>
+            <h3 class="text-base font-semibold text-white">Zero Credential Leakage</h3>
+            <p class="mt-2 text-sm text-neutral-400 leading-relaxed">
+              Secrets are passed exclusively via standard environment variables or explicit <code class="font-mono text-neutral-300">--env-file</code>. Command-line flags and output logs never expose credentials or secret tokens.
+            </p>
+          </div>
+
+          <!-- Card 6 -->
+          <div class="rounded-xl border border-neutral-800 bg-neutral-900/60 p-6 hover:border-neutral-700 transition-colors">
+            <div class="flex h-10 w-10 items-center justify-center rounded-lg border border-neutral-700 bg-neutral-800 text-neutral-200 mb-4">
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+            </div>
+            <h3 class="text-base font-semibold text-white">Pre-Flight Disk Space Check</h3>
+            <p class="mt-2 text-sm text-neutral-400 leading-relaxed">
+              Before mutation begins, available disk capacity is verified against uncompressed archive sizes plus staging artifacts. Inadequate space aborts the execution cleanly.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ARCHITECTURE & RESTORE MODES -->
+    <section id="workflow" class="border-b border-neutral-800 py-20 bg-neutral-950">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <div>
+            <div class="text-xs font-mono font-semibold uppercase tracking-wider text-neutral-400">Execution Pipeline</div>
+            <h2 class="mt-2 text-3xl font-bold tracking-tight text-white">How coolrestore handles your archive</h2>
+            <p class="mt-4 text-neutral-400 leading-relaxed">
+              Unlike traditional tar extract commands that run directly into destination folders, coolrestore routes all operations through isolated staging, integrity verification, and atomic state switching.
+            </p>
+
+            <div class="mt-8 space-y-6">
+              <!-- Step 1 -->
+              <div class="flex gap-4">
+                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-neutral-700 bg-neutral-900 font-mono text-xs font-bold text-neutral-300">
+                  1
+                </div>
+                <div>
+                  <h4 class="text-sm font-semibold text-white">Acquisition &amp; Isolation</h4>
+                  <p class="mt-1 text-xs text-neutral-400">Downloads from S3-compatible endpoints (or local path) into an isolated staging area on the target filesystem.</p>
+                </div>
+              </div>
+
+              <!-- Step 2 -->
+              <div class="flex gap-4">
+                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-neutral-700 bg-neutral-900 font-mono text-xs font-bold text-neutral-300">
+                  2
+                </div>
+                <div>
+                  <h4 class="text-sm font-semibold text-white">Strict Integrity &amp; Security Scan</h4>
+                  <p class="mt-1 text-xs text-neutral-400">Verifies gzip integrity, calculates file sizes, checks against path traversal attacks, and validates entry boundaries.</p>
+                </div>
+              </div>
+
+              <!-- Step 3 -->
+              <div class="flex gap-4">
+                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-neutral-700 bg-neutral-900 font-mono text-xs font-bold text-neutral-300">
+                  3
+                </div>
+                <div>
+                  <h4 class="text-sm font-semibold text-white">Target Lock &amp; Space Reservation</h4>
+                  <p class="mt-1 text-xs text-neutral-400">Acquires an exclusive lock on the target directory and checks filesystem capacity before proceeding.</p>
+                </div>
+              </div>
+
+              <!-- Step 4 -->
+              <div class="flex gap-4">
+                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-neutral-700 bg-neutral-900 font-mono text-xs font-bold text-neutral-300">
+                  4
+                </div>
+                <div>
+                  <h4 class="text-sm font-semibold text-white">Plan Preview or Atomic Application</h4>
+                  <p class="mt-1 text-xs text-neutral-400">Outputs diff report by default. If confirmed, commits changes via Merge or atomic Replace with instant rollback safety.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mode Comparison Box -->
+          <div class="rounded-2xl border border-neutral-800 bg-neutral-900/50 p-6 sm:p-8">
+            <h3 class="text-lg font-bold text-white mb-6">Choose Your Restore Mode</h3>
+
+            <div class="space-y-4">
+              <!-- Merge Mode Box -->
+              <div class="rounded-xl border border-neutral-800 bg-neutral-900/80 p-5">
+                <div class="flex items-center justify-between">
+                  <span class="font-mono text-xs font-semibold uppercase tracking-wider text-neutral-300">Mode: merge (Default)</span>
+                  <span class="rounded bg-neutral-800 px-2 py-0.5 text-[10px] text-neutral-400 font-mono">Additive</span>
+                </div>
+                <p class="mt-2 text-xs text-neutral-400 leading-relaxed">
+                  Adds missing files and updates existing files from the archive. Any files already in the target that are not in the archive are completely preserved.
+                </p>
+                <div class="mt-3 font-mono text-[11px] text-neutral-400 bg-neutral-950 p-2.5 rounded border border-neutral-850">
+                  coolrestore --source s3://... --target /path --confirm
+                </div>
+              </div>
+
+              <!-- Replace Mode Box -->
+              <div class="rounded-xl border border-neutral-700/80 bg-neutral-900/80 p-5">
+                <div class="flex items-center justify-between">
+                  <span class="font-mono text-xs font-semibold uppercase tracking-wider text-white">Mode: replace</span>
+                  <span class="rounded bg-neutral-800 px-2 py-0.5 text-[10px] text-neutral-300 font-mono">Exact Match + Rollback</span>
+                </div>
+                <p class="mt-2 text-xs text-neutral-400 leading-relaxed">
+                  Target becomes an exact replica of the archive. Utilizes atomic filesystem renames on the same filesystem. In case of disruption, rolls back to prior state automatically.
+                </p>
+                <div class="mt-3 font-mono text-[11px] text-neutral-300 bg-neutral-950 p-2.5 rounded border border-neutral-850">
+                  coolrestore --source s3://... --target /path --mode replace --confirm
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- COMPATIBILITY / S3 ECOSYSTEM -->
+    <section class="border-b border-neutral-800 py-16 bg-neutral-900/10">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
+        <h3 class="text-xs font-mono font-semibold uppercase tracking-wider text-neutral-400">Ecosystem &amp; Storage Compatibility</h3>
+        <p class="mt-2 text-xl font-bold text-white">Works seamlessly with your infrastructure stack</p>
+
+        <div class="mt-8 flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-sm font-medium text-neutral-300">
+          <div class="flex items-center gap-2 rounded-lg border border-neutral-800 bg-neutral-900/60 px-4 py-2.5">
+            <span class="h-2 w-2 rounded-full bg-neutral-400"></span>
+            <span>Coolify Volumes</span>
+          </div>
+          <div class="flex items-center gap-2 rounded-lg border border-neutral-800 bg-neutral-900/60 px-4 py-2.5">
+            <span class="h-2 w-2 rounded-full bg-neutral-400"></span>
+            <span>RustFS</span>
+          </div>
+          <div class="flex items-center gap-2 rounded-lg border border-neutral-800 bg-neutral-900/60 px-4 py-2.5">
+            <span class="h-2 w-2 rounded-full bg-neutral-400"></span>
+            <span>AWS S3</span>
+          </div>
+          <div class="flex items-center gap-2 rounded-lg border border-neutral-800 bg-neutral-900/60 px-4 py-2.5">
+            <span class="h-2 w-2 rounded-full bg-neutral-400"></span>
+            <span>MinIO</span>
+          </div>
+          <div class="flex items-center gap-2 rounded-lg border border-neutral-800 bg-neutral-900/60 px-4 py-2.5">
+            <span class="h-2 w-2 rounded-full bg-neutral-400"></span>
+            <span>Cloudflare R2</span>
+          </div>
+          <div class="flex items-center gap-2 rounded-lg border border-neutral-800 bg-neutral-900/60 px-4 py-2.5">
+            <span class="h-2 w-2 rounded-full bg-neutral-400"></span>
+            <span>Local Tarballs (.tar.gz)</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- INSTALLATION & QUICKSTART -->
+    <section id="quickstart" class="border-b border-neutral-800 py-20 bg-neutral-950">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-2xl mx-auto mb-12">
+          <div class="text-xs font-mono font-semibold uppercase tracking-wider text-neutral-400">Distribution</div>
+          <h2 class="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">Get coolrestore on your server</h2>
+          <p class="mt-3 text-sm text-neutral-400">Static, zero-dependency binaries ready for production servers and local workstations.</p>
+        </div>
+
+        <div class="mx-auto max-w-3xl">
+          <!-- Install Tabs -->
+          <div class="flex border-b border-neutral-800 text-xs font-mono">
+            <button onclick="switchInstallTab('inst-brew', this)" class="install-tab border-b-2 border-white px-4 py-3 text-white font-medium">Homebrew</button>
+            <button onclick="switchInstallTab('inst-apt', this)" class="install-tab border-b-2 border-transparent px-4 py-3 text-neutral-400 hover:text-neutral-200">APT (Debian/Ubuntu)</button>
+            <button onclick="switchInstallTab('inst-binary', this)" class="install-tab border-b-2 border-transparent px-4 py-3 text-neutral-400 hover:text-neutral-200">GitHub Release</button>
+            <button onclick="switchInstallTab('inst-go', this)" class="install-tab border-b-2 border-transparent px-4 py-3 text-neutral-400 hover:text-neutral-200">Go Install</button>
+          </div>
+
+          <!-- Install Panels -->
+          <div class="mt-6">
+            <!-- Homebrew -->
+            <div id="inst-brew" class="install-content space-y-4">
+              <p class="text-xs text-neutral-400">Install via the official Replworks tap (macOS &amp; Linux):</p>
+              <div class="relative rounded-xl border border-neutral-800 bg-neutral-900/90 p-4 font-mono text-xs text-neutral-200">
+                <button onclick="copyToClipboard('brew tap replworks/tap\nbrew install --cask coolrestore', this)" class="absolute right-4 top-4 text-neutral-400 hover:text-white">Copy</button>
+                <div class="space-y-1">
+                  <div><span class="text-neutral-500">$</span> brew tap replworks/tap</div>
+                  <div><span class="text-neutral-500">$</span> brew install --cask coolrestore</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- APT -->
+            <div id="inst-apt" class="install-content hidden space-y-4">
+              <p class="text-xs text-neutral-400">Install from signed Replworks APT repository for Ubuntu / Debian servers:</p>
+              <div class="relative rounded-xl border border-neutral-800 bg-neutral-900/90 p-4 font-mono text-xs text-neutral-200">
+                <button onclick="copyToClipboard('sudo mkdir -p /etc/apt/keyrings\ncurl -fsSL https://apt.repl.net/replworks.gpg | sudo tee /etc/apt/keyrings/replworks.gpg >/dev/null\necho &quot;deb [signed-by=/etc/apt/keyrings/replworks.gpg] https://apt.repl.net stable main&quot; | sudo tee /etc/apt/sources.list.d/replworks.list\nsudo apt update && sudo apt install coolrestore', this)" class="absolute right-4 top-4 text-neutral-400 hover:text-white">Copy</button>
+                <div class="space-y-1 text-neutral-300">
+                  <div><span class="text-neutral-500">$</span> sudo mkdir -p /etc/apt/keyrings</div>
+                  <div><span class="text-neutral-500">$</span> curl -fsSL https://apt.repl.net/replworks.gpg | sudo tee /etc/apt/keyrings/replworks.gpg >/dev/null</div>
+                  <div><span class="text-neutral-500">$</span> echo "deb [signed-by=/etc/apt/keyrings/replworks.gpg] https://apt.repl.net stable main" | sudo tee /etc/apt/sources.list.d/replworks.list</div>
+                  <div><span class="text-neutral-500">$</span> sudo apt update &amp;&amp; sudo apt install coolrestore</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Direct Binary -->
+            <div id="inst-binary" class="install-content hidden space-y-4">
+              <p class="text-xs text-neutral-400">Download statically linked Linux binaries (amd64 / arm64) directly to your PATH:</p>
+              <div class="relative rounded-xl border border-neutral-800 bg-neutral-900/90 p-4 font-mono text-xs text-neutral-200">
+                <button onclick="copyToClipboard('curl -LO https://github.com/replworks/coolrestore/releases/latest/download/coolrestore-linux-amd64\ninstall -m 0755 coolrestore-linux-amd64 /usr/local/bin/coolrestore', this)" class="absolute right-4 top-4 text-neutral-400 hover:text-white">Copy</button>
+                <div class="space-y-1">
+                  <div><span class="text-neutral-500">$</span> curl -LO https://github.com/replworks/coolrestore/releases/latest/download/coolrestore-linux-amd64</div>
+                  <div><span class="text-neutral-500">$</span> install -m 0755 coolrestore-linux-amd64 /usr/local/bin/coolrestore</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Go -->
+            <div id="inst-go" class="install-content hidden space-y-4">
+              <p class="text-xs text-neutral-400">Compile and install via Go toolchain:</p>
+              <div class="relative rounded-xl border border-neutral-800 bg-neutral-900/90 p-4 font-mono text-xs text-neutral-200">
+                <button onclick="copyToClipboard('go install github.com/replworks/coolrestore/cmd/coolrestore@latest', this)" class="absolute right-4 top-4 text-neutral-400 hover:text-white">Copy</button>
+                <div><span class="text-neutral-500">$</span> go install github.com/replworks/coolrestore/cmd/coolrestore@latest</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Configuration Note -->
+          <div class="mt-8 rounded-xl border border-neutral-800 bg-neutral-900/40 p-5">
+            <h4 class="text-xs font-mono font-semibold uppercase text-neutral-300">Environment File Setup (.env)</h4>
+            <p class="mt-1 text-xs text-neutral-400">coolrestore explicitly avoids auto-discovering dotenv files from cwd for security. Pass your config file securely with <code class="text-neutral-200 font-mono">--env-file</code>:</p>
+            <pre class="mt-3 overflow-x-auto rounded border border-neutral-800 bg-neutral-950 p-3 font-mono text-[11px] text-neutral-300">
+AWS_ACCESS_KEY_ID=your-key-id
+AWS_SECRET_ACCESS_KEY=your-secret-key
+AWS_REGION=us-east-1
+AWS_ENDPOINT_URL=https://rustfs.your-domain.com
+AWS_S3_FORCE_PATH_STYLE=true</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- COMMAND & FLAG REFERENCE TABLE -->
+    <section id="commands" class="border-b border-neutral-800 py-20 bg-neutral-900/20">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="max-w-2xl mb-10">
+          <div class="text-xs font-mono font-semibold uppercase tracking-wider text-neutral-400">CLI Reference</div>
+          <h2 class="mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-white">Commands &amp; Options</h2>
+          <p class="mt-2 text-sm text-neutral-400">All command-line arguments and flags supported by coolrestore.</p>
+        </div>
+
+        <div class="overflow-x-auto rounded-xl border border-neutral-800 bg-neutral-900/80 custom-scrollbar">
+          <table class="w-full text-left text-xs font-mono">
+            <thead class="border-b border-neutral-800 bg-neutral-900 text-neutral-400">
+              <tr>
+                <th class="px-4 py-3 font-semibold">Flag / Command</th>
+                <th class="px-4 py-3 font-semibold">Type</th>
+                <th class="px-4 py-3 font-semibold">Description</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-neutral-800/60 text-neutral-300 font-sans">
+              <tr>
+                <td class="px-4 py-3 font-mono text-neutral-200">coolrestore (default)</td>
+                <td class="px-4 py-3 font-mono text-neutral-400">command</td>
+                <td class="px-4 py-3">Executes restore operation (defaults to safe dry-run plan without <code class="font-mono text-neutral-300">--confirm</code>).</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-3 font-mono text-neutral-200">coolrestore diagnose</td>
+                <td class="px-4 py-3 font-mono text-neutral-400">command</td>
+                <td class="px-4 py-3">Read-only check for S3 reachability, permissions, or local file readability without downloading body.</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-3 font-mono text-neutral-200">coolrestore list</td>
+                <td class="px-4 py-3 font-mono text-neutral-400">command</td>
+                <td class="px-4 py-3">Lists all <code class="font-mono text-neutral-300">.tar.gz</code> archive objects under a trailing-slash S3 prefix with timestamps and sizes.</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-3 font-mono text-neutral-200">--source &lt;URI|PATH&gt;</td>
+                <td class="px-4 py-3 font-mono text-neutral-400">string (required)</td>
+                <td class="px-4 py-3">S3 URI (<code class="font-mono text-neutral-300">s3://bucket/key.tar.gz</code>) or absolute local file path. Prefix ends in <code class="font-mono text-neutral-300">/</code>.</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-3 font-mono text-neutral-200">--target &lt;DIR&gt;</td>
+                <td class="px-4 py-3 font-mono text-neutral-400">string (required*)</td>
+                <td class="px-4 py-3">Absolute directory where archive contents will be restored (*not required for diagnose/list).</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-3 font-mono text-neutral-200">--mode &lt;merge|replace&gt;</td>
+                <td class="px-4 py-3 font-mono text-neutral-400">string (default: merge)</td>
+                <td class="px-4 py-3"><code class="font-mono text-neutral-300">merge</code> adds/overwrites and retains existing files; <code class="font-mono text-neutral-300">replace</code> makes target identical to archive.</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-3 font-mono text-neutral-200">--confirm</td>
+                <td class="px-4 py-3 font-mono text-neutral-400">boolean</td>
+                <td class="px-4 py-3">Explicit authorization to write changes to disk. Required for actual mutation and <code class="font-mono text-neutral-300">replace</code> mode.</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-3 font-mono text-neutral-200">--latest</td>
+                <td class="px-4 py-3 font-mono text-neutral-400">boolean</td>
+                <td class="px-4 py-3">Selects newest <code class="font-mono text-neutral-300">.tar.gz</code> object under a trailing-slash S3 prefix by last-modified timestamp.</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-3 font-mono text-neutral-200">--env-file &lt;PATH&gt;</td>
+                <td class="px-4 py-3 font-mono text-neutral-400">string</td>
+                <td class="px-4 py-3">Explicit path to secure dotenv file containing AWS/S3 access credentials and endpoint configuration.</td>
+              </tr>
+              <tr>
+                <td class="px-4 py-3 font-mono text-neutral-200">--staging &lt;DIR&gt;</td>
+                <td class="px-4 py-3 font-mono text-neutral-400">string</td>
+                <td class="px-4 py-3">Custom base directory for isolated archive extraction (must share filesystem with target for replace mode).</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ SECTION -->
+    <section class="border-b border-neutral-800 py-20 bg-neutral-950">
+      <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+        <h2 class="text-2xl font-bold tracking-tight text-white text-center mb-10">Frequently Asked Questions</h2>
+        <div class="space-y-6">
+          <div class="rounded-xl border border-neutral-800 bg-neutral-900/50 p-5">
+            <h3 class="text-sm font-semibold text-white">Does running coolrestore modify my server immediately?</h3>
+            <p class="mt-2 text-xs sm:text-sm text-neutral-400 leading-relaxed">
+              No. By default, coolrestore runs in preview-only mode. It downloads to an isolated staging area, verifies archive health, calculates what would be added or overwritten, and outputs a plan. It will never write to your target directory without <code class="font-mono text-neutral-300">--confirm</code>.
+            </p>
+          </div>
+
+          <div class="rounded-xl border border-neutral-800 bg-neutral-900/50 p-5">
+            <h3 class="text-sm font-semibold text-white">How does atomic replace rollback protect my storage?</h3>
+            <p class="mt-2 text-xs sm:text-sm text-neutral-400 leading-relaxed">
+              In replace mode, staging and target must reside on the same filesystem. The swap is executed through atomic directory renames. If any failure occurs during the switch, the previous state is restored immediately, avoiding partially overwritten volumes.
+            </p>
+          </div>
+
+          <div class="rounded-xl border border-neutral-800 bg-neutral-900/50 p-5">
+            <h3 class="text-sm font-semibold text-white">Can I restore non-Coolify backup archives?</h3>
+            <p class="mt-2 text-xs sm:text-sm text-neutral-400 leading-relaxed">
+              Yes. Any standard gzip-compressed tar archive (<code class="font-mono text-neutral-300">.tar.gz</code>) residing in S3-compatible storage or on a local disk can be restored into any valid target directory.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-neutral-800 bg-neutral-950 py-12 text-xs text-neutral-400">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+      <div class="flex items-center gap-3">
+        <div class="flex h-7 w-7 items-center justify-center rounded border border-neutral-700 bg-neutral-900">
+          <svg class="h-4 w-4 text-neutral-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+          </svg>
+        </div>
+        <span class="font-semibold text-neutral-200">coolrestore</span>
+        <span class="text-neutral-600">|</span>
+        <span>Built for safe Coolify storage recovery after an incident.</span>
+      </div>
+
+      <div class="flex items-center gap-6">
+        <a href="https://github.com/replworks/coolrestore" target="_blank" rel="noopener noreferrer" class="hover:text-white transition-colors">GitHub Repository</a>
+        <a href="https://github.com/replworks/coolrestore/releases" target="_blank" rel="noopener noreferrer" class="hover:text-white transition-colors">Releases</a>
+        <a href="https://github.com/replworks/coolrestore/blob/main/LICENSE" target="_blank" rel="noopener noreferrer" class="hover:text-white transition-colors">License</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- CLIENT SCRIPTS: TAB SWITCHING & CLIPBOARD COPY -->
+  <script>
+    function switchTab(tabId, btn) {
+      document.querySelectorAll('.demo-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById(tabId).classList.remove('hidden');
+
+      document.querySelectorAll('.demo-tab').forEach(el => {
+        el.classList.remove('bg-neutral-800', 'text-white');
+        el.classList.add('text-neutral-400');
+      });
+      btn.classList.add('bg-neutral-800', 'text-white');
+      btn.classList.remove('text-neutral-400');
+    }
+
+    function switchInstallTab(tabId, btn) {
+      document.querySelectorAll('.install-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById(tabId).classList.remove('hidden');
+
+      document.querySelectorAll('.install-tab').forEach(el => {
+        el.classList.remove('border-white', 'text-white');
+        el.classList.add('border-transparent', 'text-neutral-400');
+      });
+      btn.classList.add('border-white', 'text-white');
+      btn.classList.remove('border-transparent', 'text-neutral-400');
+    }
+
+    function copyToClipboard(text, buttonElement) {
+      navigator.clipboard.writeText(text).then(() => {
+        const originalText = buttonElement.innerHTML;
+        buttonElement.innerHTML = `
+          <svg class="h-3.5 w-3.5 text-emerald-400 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+          <span class="text-emerald-400 ml-1">Copied!</span>
+        `;
+        setTimeout(() => {
+          buttonElement.innerHTML = originalText;
+        }, 2000);
+      }).catch(err => {
+        console.error('Failed to copy text: ', err);
+      });
+    }
+  </script>
+</body>
+</html>
