@@ -1,5 +1,8 @@
 {
   "name": "coolrestore",
   "compatibility_date": "2026-10-31",
-  "assets": { "directory": "./public" }
+  "routes": [
+    { "pattern": "www.repl.net/coolrestore*", "zone_name": "repl.net" }
+  ],
+  "assets": { "directory": "./dist" }
 }
